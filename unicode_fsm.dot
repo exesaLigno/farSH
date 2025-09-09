@@ -1,0 +1,70 @@
+digraph G {
+    rankdir=LR
+    
+    start[shape=diamond, color=green]
+    
+    f_sequences[label="Any F-sequence (Fe, Fs, Fp)", shape=rectangle]
+    csi[label="Control Sequence Introducer", shape=rectangle]
+    csi_params[label="Any number of parameter bytes", shape=rectangle]
+    csi_internal[label="Any number of internal bytes", shape=rectangle]
+    // osc[label="Operating system command", shape=rectangle]
+    nf[label="nF sequence", shape=rectangle]
+    
+    
+    unicode2b1[label="First byte of 2-bytes unicode", shape=rectangle]
+    unicode3b1[label="First byte of 3-bytes unicode", shape=rectangle]
+    unicode3b2[label="Second byte of 3-bytes unicode", shape=rectangle]
+    unicode4b1[label="First byte of 4-bytes unicode", shape=rectangle]
+    unicode4b2[label="Second byte of 4-bytes unicode", shape=rectangle]
+    unicode4b3[label="Third byte of 4-bytes unicode", shape=rectangle]
+
+    end[shape=diamond, color=green]
+    error[shape=square, color=red]
+    
+    start->end[label="0x00-0x1A, 0x1C-0x1F, 0x7F (C0); 0x20-0x7E (ASCII)", style=solid]
+    
+    start->f_sequences[label="0x1B", style=solid]
+    f_sequences->end[label="0x30-0x5A, 0x5C, 0x5E-0x7E", style=solid]
+    f_sequences->error[label="0x00-0x1F, 0x7F-0xFF", color=red, style=solid]
+    
+    f_sequences->csi[label="0x5B", style=solid]
+    csi->csi_params[label="0x30–0x3F", style=solid]
+    csi->csi_internal[label="0x20–0x2F", style=solid]
+    csi->end[label="0x40–0x7E", style=solid]
+    csi->error[label="0x00-0x1F, 0x7F, 0x80-0xFF", color=red, style=solid]
+    csi_params->csi_params[label="0x30–0x3F", style=solid]
+    csi_params->csi_internal[label="0x20–0x2F", style=solid]
+    csi_params->end[label="0x40–0x7E", style=solid]
+    csi_params->error[label="0x00-0x1F, 0x7F, 0x80-0xFF", color=red, style=solid]
+    csi_internal->csi_internal[label="0x20–0x2F", style=solid]
+    csi_internal->end[label="0x40–0x7E", style=solid]
+    csi_internal->error[label="0x00-0x1F, 0x30-0x3F, 0x7F, 0x80-0xFF", color=red, style=solid]
+
+    f_sequences->error[label="0x5D (Operating system commands not supported)", color=red, style=solid]
+    
+    f_sequences->nf[label="0x20-0x2F", style=solid]
+    nf->nf[label="0x20-0x2F", style=solid]
+    nf->end[label="0x30-0x7E", style=solid]
+    nf->error[label="0x00-0x1F, 0x7F, 0x80-0xFF", color=red, style=solid]
+    
+    start->unicode2b1[label="0xC2-0xDF", style=solid]
+    unicode2b1->end[label="0x80-0xBF", style=solid]
+    unicode2b1->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+
+    start->unicode3b1[label="0xE0-0xEF", style=solid]
+    unicode3b1->unicode3b2[label="0x80-0xBF", style=solid]
+    unicode3b1->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+    unicode3b2->end[label="0x80-0xBF", style=solid]
+    unicode3b2->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+
+    start->unicode4b1[label="0xF0-0xF4", style=solid]
+    unicode4b1->unicode4b2[label="0x80-0xBF", style=solid]
+    unicode4b1->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+    unicode4b2->unicode4b3[label="0x80-0xBF", style=solid]
+    unicode4b2->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+    unicode4b3->end[label="0x80-0xBF", style=solid]
+    unicode4b3->error[label="0x00-0x7F, 0xC0-0xFF", color=red, style=solid]
+
+    start->error[label="0x80-0xBF", color=red, style=solid]
+    start->error[label="0xC0, 0xC1, 0xF5-0xFF (Not supported)", color=red, style=solid]
+}
