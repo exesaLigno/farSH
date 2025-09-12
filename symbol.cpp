@@ -160,7 +160,7 @@ public:
         }
     }
 
-    void WriteTo(FILE* fileno = stdout)
+    void WriteTo(FILE* fileno = stdout) const
     {
         if (type != Type::None and type != Type::Invalid)
             for (size_t idx = 0; idx < bytes_length; idx++)

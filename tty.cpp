@@ -4,20 +4,27 @@
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <csignal>
 #include <cstdio>
 
 #include "event.cpp"
+#include "buffer.cpp"
 
 class TTY
 {
 private:
     termios original_stdin_attributes;
-    int original_stdin_flags;
     termios modified_stdin_attributes;
     unsigned short int terminalRows = 0;
     unsigned short int terminalCols = 0;
     unsigned short int terminalXPixels = 0;
     unsigned short int terminalYPixels = 0;
+    unsigned short int currentRow = 0;
+    unsigned short int currentCol = 0;
+
+    size_t line_length = 0;
+
+    FILE* stream = stdout;
 
     bool FetchSize()
     {
@@ -39,53 +46,56 @@ private:
         return changed;
     }
 
-    void Dynamic()
+    static void test(int sig)
     {
-        tcsetattr(STDIN_FILENO, TCSANOW, &modified_stdin_attributes);
-        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    }
-
-    void Static()
-    {
-        tcsetattr(STDIN_FILENO, TCSANOW, &original_stdin_attributes);
-        fcntl(STDIN_FILENO, F_SETFL, original_stdin_flags);
+        printf("hello");
     }
 
 public:
     TTY()
     {
+        std::signal(SIGWINCH, test);
         tcgetattr(STDIN_FILENO, &original_stdin_attributes);
-        original_stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
 
         modified_stdin_attributes = original_stdin_attributes;
         modified_stdin_attributes.c_lflag &= ~(ECHO | ICANON);
 
-        Dynamic();        
+        tcsetattr(STDIN_FILENO, TCSANOW, &modified_stdin_attributes);
+        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
         FetchSize();
     }
 
     ~TTY()
     {
-        Static();
+        tcsetattr(STDIN_FILENO, TCSANOW, &original_stdin_attributes);
     }
 
-    void MoveCursor(int shift, int cur_row = -1, int cur_col = -1)
+    void MoveCursor(int shift)
     {
-        FetchSize();
-        // if (cur_row == -1 or cur_col == -1)
-        // {
-        //     printf("\e[6n");
-        //     Event cursor_position = Fetch();
+        int cur_col = currentCol + shift;
+        int cur_row = currentRow;
 
-        //     int cur_row = cursor_position.GetSCIArgument(0);
-        //     int cur_col = cursor_position.GetSCIArgument(1);
-        // }
-
-        cur_col += shift;
+        while (cur_col < 1)
+        {
+            cur_col += terminalCols;
+            cur_row--;
+        }
+        
         while (cur_col > terminalCols)
         {
             cur_col -= terminalCols;
             cur_row++;
+        }
+
+        if (cur_row > terminalRows)
+        {
+            printf("\e[%dS", cur_row - terminalRows);
+            cur_row = terminalRows;
+        }
+
+        if (cur_row < 1)
+        {
+            cur_row = 0;
         }
 
         printf("\e[%d;%dH", cur_row, cur_col);
@@ -93,6 +103,9 @@ public:
 
     Event Fetch()
     {
+        if (FetchSize())
+            return Event(Event::Type::WindowResize);
+
         enum class State
         {
             Start, End, Error,
@@ -107,9 +120,6 @@ public:
         /// FIXME: refactor for very long escape sequences!
         uint8_t buffer[100] = { 0 };
         size_t buffer_idx = 0;
-
-        if (FetchSize())
-            return Event(Event::Type::WindowResize);
 
         State current_state = State::Start;
 
@@ -247,6 +257,21 @@ public:
             buffer[buffer_idx++] = byte;
         }
 
-        return Event(buffer, buffer_idx);
+        Event ev = Event(buffer, buffer_idx);
+
+        if (ev.GetSymbolType() == UnicodeSymbol::Type::EscapedSequence and ev.GetCommand() == UnicodeSymbol::Command::CursorPosition)
+        {
+            currentRow = ev.GetCSIParameter(0);
+            currentCol = ev.GetCSIParameter(1);
+            return Fetch();
+        }
+
+        else
+            return Event(buffer, buffer_idx);
+    }
+
+    void ResetLine()
+    {
+        line_length = 0;
     }
 };

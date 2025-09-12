@@ -137,6 +137,6 @@ public:
             }
         }
 
-        printf(buffer);
+        printf("%s\e7", buffer);
     }
 };

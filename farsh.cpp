@@ -17,6 +17,16 @@ private:
     char cwd[2048] = { 0 };
     int inputStartRow = 0;
     int inputStartColumn = 0;
+    UnicodeBuffer buffer;
+
+    void UpdateInput(size_t old_indent, size_t new_indent)
+    {
+        for (size_t _ = 0; _ < old_indent; _++)
+            printf("\b");
+        buffer.WriteTo(stdout);
+        // for (size_t _ = 0; _ < buffer.buffer_length - buffer.current_position; _++)
+        //     printf("\b");
+    }
 
 public:
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
@@ -46,10 +56,8 @@ public:
 
     void Run()
     {
-        UnicodeBuffer buffer;
-
         prompt.Print();
-        fprintf(stdout, "\e[6n");
+        // fprintf(stdout, "\e[6n");
 
         while (true)
         {
@@ -61,10 +69,18 @@ public:
 
             if (not event.IsCommand())
             {
-                buffer.Insert(event.GetSymbol());
-                printf("\e[%d;%dH\e[0J", inputStartRow, inputStartColumn);
-                buffer.WriteTo();
-                tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                // size_t old_indent = buffer.current_position;
+                // tty.Clear(buffer);
+                // tty.UpdateOutput(buffer, buffer.Insert(event.GetSymbol()));
+                // size_t new_indent = buffer.current_position;
+                // UpdateInput(old_indent, new_indent);
+                // printf("\e[%d;%dH\e[0J", inputStartRow, inputStartColumn);
+                // buffer.WriteTo();
+                // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                // buffer.Insert(event.GetSymbol());
+                // printf("\e8\e[0J");
+                // buffer.WriteTo(stdout);
+                printf("")
             }
 
             else
@@ -75,15 +91,18 @@ public:
                         printf("\n");
                         prompt.Print(/*ExecuteCommand(buffer.data)*/);
                         buffer.Reset();
-                        fprintf(stdout, "\e[6n\e[0J");
+                        fprintf(stdout, "\e[0J");
                         break; 
 
                     case UnicodeSymbol::Command::Del:
-                        buffer.ClearSymbolBefore();
-                        printf("\e[%d;%dH", inputStartRow, inputStartColumn);
-                        printf("\e[0J");
-                        buffer.WriteTo();
-                        tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                        // size_t old_pos = buffer.current_position;
+                        // tty.Clear(buffer);
+                        // tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
+                        // // buffer.ClearSymbolBefore();
+                        // printf("\e[%d;%dH", inputStartRow, inputStartColumn);
+                        // printf("\e[0J");
+                        // buffer.WriteTo();
+                        // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
                         break;
 
                     // case Event::Command::Stop:
@@ -99,29 +118,25 @@ public:
                     //     break;
 
                     case UnicodeSymbol::Command::ArrowRight:
-                        buffer.MoveCursorForward();
-                        tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                        // tty.MoveCursor(buffer.MoveCursorForward());
+                        // tty.Clear(buffer);
+                        // tty.UpdateOutput(buffer, buffer.MoveCursorForward());
                         break;
 
                     case UnicodeSymbol::Command::ArrowLeft:
-                        buffer.MoveCursorBackward();
-                        tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                        // tty.Clear(buffer);
+                        // tty.UpdateOutput(buffer, buffer.MoveCursorBackward());
                         break;
 
-                    case UnicodeSymbol::Command::CursorPosition:
-                        inputStartRow = event.GetCSIParameter(0);
-                        inputStartColumn = event.GetCSIParameter(1);
-                        break;
+                    // case UnicodeSymbol::Command::CursorPosition:
+                    //     inputStartRow = event.GetCSIParameter(0);
+                    //     inputStartColumn = event.GetCSIParameter(1);
+                    //     break;
 
-                    // default:
-                    //     printf("????");
+                    default:
+                        event.GetSymbol().DebugWriteTo(stdout);
+                        break;
                 }
-                // else if (event.GetCommand() == Event::Command::None)
-                // {
-                //     printf("???");
-                // }
-                // else
-                //     printf("?!?!?");
             }
 
             // // if (symbol != -1)
