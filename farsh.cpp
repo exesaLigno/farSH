@@ -94,7 +94,7 @@ public:
                         fprintf(stdout, "\e[0J");
                         break; 
 
-                    case UnicodeSymbol::Command::Del:
+                    case UnicodeSymbol::Command::Delete:
                         // size_t old_pos = buffer.current_position;
                         // tty.Clear(buffer);
                         // tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
@@ -117,13 +117,13 @@ public:
                     //     printf("↓");
                     //     break;
 
-                    case UnicodeSymbol::Command::ArrowRight:
+                    case UnicodeSymbol::Command::CursorForward:
                         // tty.MoveCursor(buffer.MoveCursorForward());
                         // tty.Clear(buffer);
                         // tty.UpdateOutput(buffer, buffer.MoveCursorForward());
                         break;
 
-                    case UnicodeSymbol::Command::ArrowLeft:
+                    case UnicodeSymbol::Command::CursorBack:
                         // tty.Clear(buffer);
                         // tty.UpdateOutput(buffer, buffer.MoveCursorBackward());
                         break;

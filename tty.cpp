@@ -17,12 +17,6 @@ private:
     termios modified_stdin_attributes;
     unsigned short int terminalRows = 0;
     unsigned short int terminalCols = 0;
-    unsigned short int terminalXPixels = 0;
-    unsigned short int terminalYPixels = 0;
-    unsigned short int currentRow = 0;
-    unsigned short int currentCol = 0;
-
-    size_t line_length = 0;
 
     FILE* stream = stdout;
 
@@ -33,35 +27,24 @@ private:
         
         bool changed = (
             terminalRows != size.ws_row ||
-            terminalCols != size.ws_col ||
-            terminalXPixels != size.ws_xpixel ||
-            terminalYPixels != size.ws_ypixel
+            terminalCols != size.ws_col
         );
 
         terminalRows = size.ws_row;
         terminalCols = size.ws_col;
-        terminalXPixels = size.ws_xpixel;
-        terminalYPixels = size.ws_ypixel;
 
         return changed;
-    }
-
-    static void test(int sig)
-    {
-        printf("hello");
     }
 
 public:
     TTY()
     {
-        std::signal(SIGWINCH, test);
         tcgetattr(STDIN_FILENO, &original_stdin_attributes);
 
         modified_stdin_attributes = original_stdin_attributes;
         modified_stdin_attributes.c_lflag &= ~(ECHO | ICANON);
 
         tcsetattr(STDIN_FILENO, TCSANOW, &modified_stdin_attributes);
-        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
         FetchSize();
     }
 
@@ -70,41 +53,9 @@ public:
         tcsetattr(STDIN_FILENO, TCSANOW, &original_stdin_attributes);
     }
 
-    void MoveCursor(int shift)
+    UnicodeSymbol Fetch()
     {
-        int cur_col = currentCol + shift;
-        int cur_row = currentRow;
-
-        while (cur_col < 1)
-        {
-            cur_col += terminalCols;
-            cur_row--;
-        }
-        
-        while (cur_col > terminalCols)
-        {
-            cur_col -= terminalCols;
-            cur_row++;
-        }
-
-        if (cur_row > terminalRows)
-        {
-            printf("\e[%dS", cur_row - terminalRows);
-            cur_row = terminalRows;
-        }
-
-        if (cur_row < 1)
-        {
-            cur_row = 0;
-        }
-
-        printf("\e[%d;%dH", cur_row, cur_col);
-    }
-
-    Event Fetch()
-    {
-        if (FetchSize())
-            return Event(Event::Type::WindowResize);
+        FetchSize();
 
         enum class State
         {
@@ -140,7 +91,7 @@ public:
                     else if ((byte >= 0x00 and byte <= 0x1A) or // Control codes
                              (byte >= 0x1C and byte <= 0x1F) or // Control codes
                              (byte == 0x7F) or                  // Control codes
-                             (byte >= 0x20 and byte <= 0x7E))   // ASCII symbols
+                             (byte >= 0x20 and byte <= 0x7E))   // ASCIISymbol symbols
                         current_state = State::End;
                     else if (byte == 0x1B) // Escaped sequence
                         current_state = State::FSequence;
@@ -257,21 +208,6 @@ public:
             buffer[buffer_idx++] = byte;
         }
 
-        Event ev = Event(buffer, buffer_idx);
-
-        if (ev.GetSymbolType() == UnicodeSymbol::Type::EscapedSequence and ev.GetCommand() == UnicodeSymbol::Command::CursorPosition)
-        {
-            currentRow = ev.GetCSIParameter(0);
-            currentCol = ev.GetCSIParameter(1);
-            return Fetch();
-        }
-
-        else
-            return Event(buffer, buffer_idx);
-    }
-
-    void ResetLine()
-    {
-        line_length = 0;
+        return UnicodeSymbol(buffer, buffer_idx);
     }
 };

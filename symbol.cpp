@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 
 typedef uint8_t Byte;
@@ -12,26 +13,249 @@ public:
     enum class Type : uint8_t
     {
         None,
-        ASCII, ControlCode,
+        ASCIISymbol, ControlCode,
         EscapedSequence,
         UnicodeSymbol,
         Invalid
     };
 
+    enum class EscapeSequenceType : uint8_t
+    {
+        None,
+        Fe, ControlSequenceIntroducer, OperatingSystemCommand, Fs, Fp, nF
+    };
+
     enum class Command
     {
         None,
-        Bell, Backspace, Tab, LineFeed, FormFeed, CarriageReturn, Del,
 
-        Escape, Stop, Interrupt,
-        ArrowUp, ArrowDown, ArrowRight, ArrowLeft,
-        CursorPosition,
+        // ASCII Controle Codes
+        Null, NUL = Null,
+        StartOfHeading, SOH = StartOfHeading,
+        StartOfText, STX = StartOfText,
+        EndOfText, ETX = EndOfText,
+        EndOfTransmission, EOT = EndOfTransmission,
+        Enquiry, ENQ = Enquiry,
+        Acknowledge, ACK = Acknowledge,
+        Bell, BEL = Bell,
+        Backspace, BS = Backspace,
+        HorizontalTab, HT = HorizontalTab,
+        LineFeed, LF = LineFeed,
+        VerticalTabulation, VT = VerticalTabulation,
+        FormFeed, FF = FormFeed,
+        CarriageReturn, CR = CarriageReturn,
+        ShiftOut, SO = ShiftOut,
+        ShiftIn, SI = ShiftIn,
+        DataLinkEscape, DLE = DataLinkEscape,
+        DeviceControlOne, DC1 = DeviceControlOne,
+        DeviceControlTwo, DC2 = DeviceControlTwo,
+        DeviceControlThree, DC3 = DeviceControlThree,
+        DeviceControlFour, DC4 = DeviceControlFour,
+        NegativeAcknowledge, NAK = NegativeAcknowledge,
+        SynchronousIdle, SYN = SynchronousIdle,
+        EndOfTransmissionBlock, ETB = EndOfTransmissionBlock,
+        Cancel, CAN = Cancel,
+        EndOfMedium, EM = EndOfMedium,
+        Substitute, SUB = Substitute,
+        Escape, ESC = Escape,
+        FileSeparator, FS = FileSeparator,
+        GroupSeparator, GS = GroupSeparator,
+        RecordSeparator, RS = RecordSeparator,
+        UnitSeparator, US = UnitSeparator,
+        Delete, DEL = Delete,
+
+        // Control Sequence Introducer
+        CursorUp, CUU = CursorUp,
+        CursorDown, CUD = CursorDown,
+        CursorForward, CUF = CursorForward,
+        CursorBack, CUB = CursorBack,
+        CursorNextLine, CNL = CursorNextLine,
+        CursorPreviousLine, CPL = CursorPreviousLine,
+        CursorHorizontalAbsolute, CHA = CursorHorizontalAbsolute,
+        CursorPosition, CUP = CursorPosition,
+        EraseInDisplay, ED = EraseInDisplay,
+        EraseInLine, EL = EraseInLine,
+        ScrollUp, SU = ScrollUp,
+        ScrollDown, SD = ScrollDown,
+        HorizontalVerticalPosition, HVP = HorizontalVerticalPosition,
+        SelectGraphicRendition, SGR = SelectGraphicRendition,
+
+        // Fe Escape Sequence
+        SingleShiftTwo, SS2 = SingleShiftTwo,
+        SingleShiftThree, SS3 = SingleShiftThree,
+        DeviceControlString, DCS = DeviceControlString,
+        StringTerminator, ST = StringTerminator,
+        StartOfString, SOS = StartOfString,
+        PrivacyMessage, PM = PrivacyMessage,
+        ApplicationProgramCommand, APC = ApplicationProgramCommand,
     };
 
 private:
-    Byte* bytes = nullptr;
+    const static size_t baseSize = 4;
+    Byte bytes[baseSize] = { 0 };
+    Byte* additionalBytes = nullptr;
     size_t bytes_length = 0;
     Type type = Type::None;
+
+    Byte GetIdentityByteByCommand(Command cmd)
+    {
+        switch (cmd)
+        {
+            case Command::Null: return 0x00;
+            case Command::StartOfHeading: return 0x01;
+            case Command::StartOfText: return 0x02;
+            case Command::EndOfText: return 0x03;
+            case Command::EndOfTransmission: return 0x04;
+            case Command::Enquiry: return 0x05;
+            case Command::Acknowledge: return 0x06;
+            case Command::Bell: return 0x07;
+            case Command::Backspace: return 0x08;
+            case Command::HorizontalTab: return 0x09;
+            case Command::LineFeed: return 0x0A;
+            case Command::VerticalTabulation: return 0x0B;
+            case Command::FormFeed: return 0x0C;
+            case Command::CarriageReturn: return 0x0D;
+            case Command::ShiftOut: return 0x0E;
+            case Command::ShiftIn: return 0x0F;
+            case Command::DataLinkEscape: return 0x10;
+            case Command::DeviceControlOne: return 0x11;
+            case Command::DeviceControlTwo: return 0x12;
+            case Command::DeviceControlThree: return 0x13;
+            case Command::DeviceControlFour: return 0x14;
+            case Command::NegativeAcknowledge: return 0x15;
+            case Command::SynchronousIdle: return 0x16;
+            case Command::EndOfTransmissionBlock: return 0x17;
+            case Command::Cancel: return 0x18;
+            case Command::EndOfMedium: return 0x19;
+            case Command::Substitute: return 0x1A;
+            case Command::Escape: return 0x1B;
+            case Command::FileSeparator: return 0x1C;
+            case Command::GroupSeparator: return 0x1D;
+            case Command::RecordSeparator: return 0x1E;
+            case Command::UnitSeparator: return 0x1F;
+            case Command::Delete: return 0x7F;
+            case Command::CursorUp: return 0x41;
+            case Command::CursorDown: return 0x42;
+            case Command::CursorForward: return 0x43;
+            case Command::CursorBack: return 0x44;
+            case Command::CursorNextLine: return 0x45;
+            case Command::CursorPreviousLine: return 0x46;
+            case Command::CursorHorizontalAbsolute: return 0x47;
+            case Command::CursorPosition: return 0x48;
+            case Command::EraseInDisplay: return 0x4A;
+            case Command::EraseInLine: return 0x4B;
+            case Command::ScrollUp: return 0x53;
+            case Command::ScrollDown: return 0x54;
+            case Command::HorizontalVerticalPosition: return 0x66;
+            case Command::SelectGraphicRendition: return 0x6D;
+            case Command::SingleShiftTwo: return 0x4E;
+            case Command::SingleShiftThree: return 0x4F;
+            case Command::DeviceControlString: return 0x50;
+            case Command::StringTerminator: return 0x5C;
+            case Command::StartOfString: return 0x58;
+            case Command::PrivacyMessage: return 0x5E;
+            case Command::ApplicationProgramCommand: return 0x5F;
+        }
+    }
+
+    Command GetControlCodeCommand() const
+    {
+        switch (GetByte(0))
+        {
+            case 0x00: return Command::Null;
+            case 0x01: return Command::StartOfHeading;
+            case 0x02: return Command::StartOfText;
+            case 0x03: return Command::EndOfText;
+            case 0x04: return Command::EndOfTransmission;
+            case 0x05: return Command::Enquiry;
+            case 0x06: return Command::Acknowledge;
+            case 0x07: return Command::Bell;
+            case 0x08: return Command::Backspace;
+            case 0x09: return Command::HorizontalTab;
+            case 0x0A: return Command::LineFeed;
+            case 0x0B: return Command::VerticalTabulation;
+            case 0x0C: return Command::FormFeed;
+            case 0x0D: return Command::CarriageReturn;
+            case 0x0E: return Command::ShiftOut;
+            case 0x0F: return Command::ShiftIn;
+            case 0x10: return Command::DataLinkEscape;
+            case 0x11: return Command::DeviceControlOne;
+            case 0x12: return Command::DeviceControlTwo;
+            case 0x13: return Command::DeviceControlThree;
+            case 0x14: return Command::DeviceControlFour;
+            case 0x15: return Command::NegativeAcknowledge;
+            case 0x16: return Command::SynchronousIdle;
+            case 0x17: return Command::EndOfTransmissionBlock;
+            case 0x18: return Command::Cancel;
+            case 0x19: return Command::EndOfMedium;
+            case 0x1A: return Command::Substitute;
+            case 0x1B: return Command::Escape;
+            case 0x1C: return Command::FileSeparator;
+            case 0x1D: return Command::GroupSeparator;
+            case 0x1E: return Command::RecordSeparator;
+            case 0x1F: return Command::UnitSeparator;
+            case 0x7F: return Command::Delete;
+            default: return Command::None;
+        }
+    }
+
+    Command GetControlSequenceIntroducerCommand() const
+    {
+        switch (GetByte(-1))
+        {
+            case 0x41: return Command::CursorUp;
+            case 0x42: return Command::CursorDown;
+            case 0x43: return Command::CursorForward;
+            case 0x44: return Command::CursorBack;
+            case 0x45: return Command::CursorNextLine;
+            case 0x46: return Command::CursorPreviousLine;
+            case 0x47: return Command::CursorHorizontalAbsolute;
+            case 0x48: return Command::CursorPosition;
+            case 0x4A: return Command::EraseInDisplay;
+            case 0x4B: return Command::EraseInLine;
+            case 0x53: return Command::ScrollUp;
+            case 0x54: return Command::ScrollDown;
+            case 0x66: return Command::HorizontalVerticalPosition;
+            case 0x6D: return Command::SelectGraphicRendition;
+            default: return Command::None;
+        }
+    }
+
+    Command GetOperatingSystemCommand() const
+    {
+        return Command::None;
+    }
+
+    Command GetFeSequenceCommand() const
+    {
+        switch (GetByte(-1))
+        {
+            case 0x4E: return Command::SingleShiftTwo;
+            case 0x4F: return Command::SingleShiftThree;
+            case 0x50: return Command::DeviceControlString;
+            case 0x5C: return Command::StringTerminator;
+            case 0x58: return Command::StartOfString;
+            case 0x5E: return Command::PrivacyMessage;
+            case 0x5F: return Command::ApplicationProgramCommand;
+            default: return Command::None;
+        }
+    }
+
+    Command GetFsSequenceCommand() const
+    {
+        return Command::None;
+    }
+
+    Command GetFpSequenceCommand() const
+    {
+        return Command::None;
+    }
+
+    Command GetnFSequenceCommand() const
+    {
+        return Command::None;
+    }
+
 
 public:
     UnicodeSymbol() { }
@@ -40,13 +264,15 @@ public:
     UnicodeSymbol(const Byte* _bytes, const size_t _bytes_length)
     {
         bytes_length = _bytes_length;
-        bytes = new Byte[_bytes_length];
+        if (_bytes_length > baseSize)
+            additionalBytes = new Byte[_bytes_length - baseSize];
+        
         memcpy(bytes, _bytes, bytes_length * sizeof(Byte));
 
         Byte first = bytes[0];
 
         if (first >= 0x20 and first <= 0x7E)
-            type = Type::ASCII;
+            type = Type::ASCIISymbol;
         else if ((first >= 0x00 and first <= 0x1A) or (first >= 0x1C and first <= 0x1F) or first == 0x7F)
             type = Type::ControlCode;
         else if (first == 0x1B)
@@ -55,19 +281,33 @@ public:
             type = Type::UnicodeSymbol;
         else
         {
-            delete[] bytes;
-            bytes = nullptr;
+            if (additionalBytes)
+                delete[] additionalBytes;
+            additionalBytes = nullptr;
             bytes_length = 0;
             type = Type::Invalid;
         }
     }
 
+    UnicodeSymbol(const Byte _byte)
+    {
+        bytes_length = 1;
+        bytes[0] = _byte;
+        
+        if ((_byte >= 0x00 and _byte <= 0x1A) or (_byte >= 0x1C and _byte <= 0x1F) or _byte == 0x7F)
+            type = Type::ControlCode;
+        else if (_byte >= 0x20 and _byte <= 0x7E)
+            type = Type::ASCIISymbol;
+        else
+            type = Type::Invalid;
+    }
+
     ~UnicodeSymbol()
     {
-        if (bytes)
+        if (additionalBytes)
         {
-            delete[] bytes;
-            bytes = nullptr;
+            delete[] additionalBytes;
+            additionalBytes = nullptr;
         }
     }
 
@@ -75,8 +315,12 @@ public:
     {
         type = other.type;
         bytes_length = other.bytes_length;
-        bytes = new Byte[bytes_length];
-        memcpy(bytes, other.bytes, bytes_length);
+        memcpy(bytes, other.bytes, baseSize);
+        if (other.additionalBytes)
+        {
+            additionalBytes = new Byte[other.bytes_length - baseSize];
+            memcpy(additionalBytes, other.additionalBytes, other.bytes_length - baseSize);
+        }
     }
 
     UnicodeSymbol& operator=(const UnicodeSymbol& other) noexcept
@@ -85,8 +329,12 @@ public:
         {
             type = other.type;
             bytes_length = other.bytes_length;
-            bytes = new Byte[bytes_length];
-            memcpy(bytes, other.bytes, bytes_length);
+            memcpy(bytes, other.bytes, baseSize);
+            if (other.additionalBytes)
+            {
+                additionalBytes = new Byte[other.bytes_length - baseSize];
+                memcpy(additionalBytes, other.additionalBytes, other.bytes_length - baseSize);
+            }
         }
 
         return *this;
@@ -94,39 +342,65 @@ public:
 
     UnicodeSymbol(UnicodeSymbol&& other) noexcept
     {
-        bytes = other.bytes;
         bytes_length = other.bytes_length;
         type = other.type;
+        additionalBytes = other.additionalBytes;
+        memcpy(bytes, other.bytes, baseSize);
 
-        other.bytes = nullptr;
         other.bytes_length = 0;
         other.type = Type::Invalid;
+        other.additionalBytes = nullptr;
     }
 
     UnicodeSymbol& operator=(UnicodeSymbol&& other) noexcept
     {
         if (this != &other)
         {
-            delete[] bytes;
+            if (additionalBytes)
+                delete[] additionalBytes;
 
-            bytes = other.bytes;
             bytes_length = other.bytes_length;
             type = other.type;
+            additionalBytes = other.additionalBytes;
+            memcpy(bytes, other.bytes, baseSize);
 
-            other.bytes = nullptr;
             other.bytes_length = 0;
             other.type = Type::Invalid;
+            other.additionalBytes = nullptr;
         }
 
         return *this;
     }
 
-    Type GetType()
+    Type GetType() const
     {
         return type;
     }
 
-    void DebugWriteTo(FILE* fileno = stdout)
+    EscapeSequenceType GetSequenceType() const
+    {
+        if (type == Type::EscapedSequence and bytes_length >= 2)
+        {
+            Byte b = GetByte(1);
+
+            if (b >= 0x40 and b <= 0x5F)
+                return EscapeSequenceType::Fe;
+            else if (b == 0x5B)
+                return EscapeSequenceType::ControlSequenceIntroducer;
+            else if (b == 0x5D)
+                return EscapeSequenceType::OperatingSystemCommand;
+            else if (b >= 0x60 and b <= 0x7E)
+                return EscapeSequenceType::Fs;
+            else if (b >= 0x30 and b <= 0x3F)
+                return EscapeSequenceType::Fp;
+            else if (b >= 0x20 and b <= 0x2F)
+                return EscapeSequenceType::nF;
+        }
+
+        return EscapeSequenceType::None;
+    }
+
+    void DebugWriteTo(FILE* fileno = stdout) const
     {
         char buf[bytes_length + 1];
         memcpy(buf, bytes, bytes_length);
@@ -139,8 +413,8 @@ public:
                 fprintf(fileno, "<INVALID>");
                 break;
 
-            case Type::ASCII:
-                fprintf(fileno, "<ASCII %c>", buf[0]);
+            case Type::ASCIISymbol:
+                fprintf(fileno, "<ASCIISymbol %c>", buf[0]);
                 break;
 
             case Type::ControlCode:
@@ -167,52 +441,64 @@ public:
                 fputc(bytes[idx], fileno);
     }
 
-    bool IsCorrect()
+    bool IsCorrect() const
     {
         return type != Type::None and type != Type::Invalid;
     }
 
-    Command GetCommand()
+    bool IsCommand() const
+    {
+        return type == Type::ControlCode or type == Type::EscapedSequence;
+    }
+
+    bool IsSymbol() const
+    {
+        return type == Type::ASCIISymbol or type == Type::UnicodeSymbol;
+    }
+
+    Command GetCommand() const
     {
         switch (type)
         {
-            case Type::ControlCode:
-                switch (bytes[0])
+            case Type::ControlCode: return GetControlCodeCommand();
+            case Type::EscapedSequence:
+                switch (GetSequenceType())
                 {
-                    case 0x07: return Command::Bell;
-                    case 0x08: return Command::Backspace;
-                    case 0x09: return Command::Tab;
-                    case 0x0A: return Command::LineFeed;
-                    case 0x0C: return Command::FormFeed;
-                    case 0x0D: return Command::CarriageReturn;
-                    case 0x7F: return Command::Del;
+                    case EscapeSequenceType::ControlSequenceIntroducer: return GetControlSequenceIntroducerCommand();
+                    case EscapeSequenceType::OperatingSystemCommand: return GetOperatingSystemCommand();
+                    case EscapeSequenceType::Fe: return GetFeSequenceCommand();
+                    case EscapeSequenceType::Fs: return GetFsSequenceCommand();
+                    case EscapeSequenceType::Fp: return GetFpSequenceCommand();
+                    case EscapeSequenceType::nF: return GetnFSequenceCommand();
                     default: return Command::None;
                 }
-
-            case Type::EscapedSequence:
-                switch (bytes[bytes_length - 1])
-                {
-                    case 'R': return Command::CursorPosition;
-                    case 'A': return Command::ArrowUp;
-                    case 'B': return Command::ArrowDown;
-                    case 'C': return Command::ArrowRight;
-                    case 'D': return Command::ArrowLeft;
-                }
+            default: return Command::None;
         }
 
         return Command::None;
     }
 
-    int GetCSIParameter(size_t position)
+    Byte GetByte(int offset = 0) const
+    {
+        size_t idx = offset >= 0 ? offset : bytes_length + offset;
+
+        if (idx < 0 or idx >= bytes_length)
+            return 0;
+            
+        return idx < baseSize ? bytes[idx] : additionalBytes[idx - baseSize];
+    }
+
+    int GetCSIParameter(size_t position) const
     {
         int result = 0;
         size_t cur_pos = 0;
 
         for (size_t idx = 0; idx < bytes_length; idx++)
         {
-            if (cur_pos == position and bytes[idx] >= 0x30 and bytes[idx] <= 0x39)
-                result = 10 * result + (bytes[idx] - 0x30);
-            if (bytes[idx] == 0x3B)
+            uint8_t byte = GetByte(idx);
+            if (cur_pos == position and byte >= 0x30 and byte <= 0x39)
+                result = 10 * result + (byte - 0x30);
+            if (byte == 0x3B)
                 cur_pos++;
         }
 
