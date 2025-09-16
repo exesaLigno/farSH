@@ -9,45 +9,65 @@ class UnicodeBuffer
 {
 public:
     UnicodeSymbol data[512];
-    size_t buffer_capacity = 512;
-    size_t buffer_length = 0;
-    size_t cursor_position = 0;
-    size_t visible_cursor_position = 0;
+    size_t bufferCapacity = 512;
+    size_t bufferLength = 0;
+    size_t cursorPosition = 0;
+    size_t displayCursorPosition = 0;
 
-    int MoveCursorForward(size_t symbols_count = 1)
+    int MoveCursorForward()
     {
-        size_t old_pos = cursor_position;
+        uint8_t display_shift = 0;
 
-        cursor_position += symbols_count;
-        if (cursor_position > buffer_length)
-            cursor_position = buffer_length;
+        while (display_shift == 0)
+        {
+            if (cursorPosition == bufferLength)
+                return 0;
 
-        return cursor_position - old_pos;
+            display_shift = data[cursorPosition].DisplayWidth();
+            cursorPosition++;
+            displayCursorPosition += display_shift;
+        }
+
+        return display_shift;
     }
 
-    int MoveCursorBackward(size_t symbols_count = 1)
+    int MoveCursorBackward()
     {
-        size_t old_pos = cursor_position;
+        uint8_t display_shift = 0;
 
-        cursor_position -= symbols_count;
-        if (cursor_position < 0)
-            cursor_position = 0;
+        while (display_shift == 0)
+        {
+            if (cursorPosition == 0)
+                return 0;
 
-        return cursor_position - old_pos;
+            cursorPosition--;
+            display_shift = data[cursorPosition].DisplayWidth();
+            displayCursorPosition -= display_shift;
+        }
+
+        return -display_shift;
     }
 
     int ClearSymbolBefore()
     {
-        if (cursor_position == 0)
+        uint8_t removed_display_width = 0;
+
+        if (cursorPosition == 0)
             return 0;
 
-        for (size_t idx = cursor_position; idx <= buffer_length; idx++)
-            data[idx - 1] = data[idx];
+        while (removed_display_width == 0)
+        {
+            removed_display_width = data[cursorPosition - 1].DisplayWidth();
 
-        buffer_length--;
-        cursor_position--;
+            for (size_t idx = cursorPosition; idx <= bufferLength; idx++)
+                data[idx - 1] = data[idx];
 
-        return -1;
+            bufferLength--;
+            cursorPosition--;
+            displayCursorPosition -= removed_display_width;
+        }
+
+        return -removed_display_width;
     }
 
     // void ClearWordBefore()
@@ -56,44 +76,47 @@ public:
 
     int ClearSymbolAfter()
     {
-        for (size_t idx = cursor_position + 1; idx <= buffer_length; idx++)
+        for (size_t idx = cursorPosition + 1; idx <= bufferLength; idx++)
             data[idx - 1] = data[idx];
 
-        buffer_length--;
+        bufferLength--;
 
         return 0;
     }
 
     int Insert(UnicodeSymbol symbol)
     {
-        if (cursor_position == buffer_length)
+        if (cursorPosition == bufferLength)
         {
-            buffer_length++;
-            data[cursor_position++] = symbol;
+            bufferLength++;
+            data[cursorPosition++] = symbol;
+            displayCursorPosition += symbol.DisplayWidth();
         }
 
         else
         {
-            buffer_length++;
+            bufferLength++;
 
-            for (size_t idx = buffer_length; idx > cursor_position; idx--)
+            for (size_t idx = bufferLength; idx > cursorPosition; idx--)
                 data[idx] = data[idx - 1];
 
-            data[cursor_position++] = symbol;
+            data[cursorPosition++] = symbol;
+            displayCursorPosition += symbol.DisplayWidth();
         }
 
-        return 1;
+        return symbol.DisplayWidth();
     }
 
     void Reset()
     {
-        buffer_length = 0;
-        cursor_position = 0;
+        bufferLength = 0;
+        cursorPosition = 0;
+        displayCursorPosition = 0;
     }
 
     void WriteTo(FILE* fileno = stdout) const
     {
-        for (size_t idx = 0; idx < buffer_length; idx++)
+        for (size_t idx = 0; idx < bufferLength; idx++)
             data[idx].WriteTo(fileno);
     }
 };

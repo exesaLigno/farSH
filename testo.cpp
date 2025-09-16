@@ -24,9 +24,10 @@ int main()
 
     printf("%s\n", Decode(ints[1].WhereIs({445, 447})));
 
-    Byte buf[] = {0xf0, 0x9f, 0x92, 0xa9};
+    Byte buf[] = {'\e', '[', '1', ';', '3', '1', 'm'};
 
     auto s = UnicodeSymbol(buf, sizeof(buf) / sizeof(Byte));
 
-    printf("U+%04X : w = %d\n", s.AsWchar(), s.GlyphWidth());
+    s.DebugWriteTo();
+    printf("\nU+%04X : w = %d\n", s.AsWchar(), s.DisplayWidth());
 }

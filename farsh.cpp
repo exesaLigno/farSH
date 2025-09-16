@@ -19,15 +19,6 @@ private:
     int inputStartColumn = 0;
     UnicodeBuffer buffer;
 
-    void UpdateInput(size_t old_indent, size_t new_indent)
-    {
-        for (size_t _ = 0; _ < old_indent; _++)
-            printf("\b");
-        buffer.WriteTo(stdout);
-        // for (size_t _ = 0; _ < buffer.buffer_length - buffer.current_position; _++)
-        //     printf("\b");
-    }
-
 public:
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
     {
@@ -54,6 +45,11 @@ public:
     //     PrintAt(0, 0, header);
     // }
 
+    void FillDynamicString(const UnicodeBuffer& buffer, UnicodeString& dynamic_string, bool completing = true)
+    {
+
+    }
+
     void Run()
     {
         prompt.Print();
@@ -69,18 +65,9 @@ public:
 
             if (not event.IsCommand())
             {
-                // size_t old_indent = buffer.current_position;
-                // tty.Clear(buffer);
-                // tty.UpdateOutput(buffer, buffer.Insert(event.GetSymbol()));
-                // size_t new_indent = buffer.current_position;
-                // UpdateInput(old_indent, new_indent);
-                // printf("\e[%d;%dH\e[0J", inputStartRow, inputStartColumn);
-                // buffer.WriteTo();
-                // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
-                // buffer.Insert(event.GetSymbol());
-                // printf("\e8\e[0J");
-                // buffer.WriteTo(stdout);
-                printf("");
+                tty.ClearDynamicString();
+                FillDynamicString(buffer, tty.DynamicString());
+                tty.PrintDynamicString();
             }
 
             else
@@ -88,11 +75,13 @@ public:
                 switch (event.GetCommand())
                 {
                     case UnicodeSymbol::Command::LineFeed:
+                        tty.ClearDynamicString();
+                        FillDynamicString(buffer, tty.DynamicString(), true);
+                        tty.PrintDynamicString();
                         printf("\n");
-                        prompt.Print(/*ExecuteCommand(buffer.data)*/);
                         buffer.Reset();
                         fprintf(stdout, "\e[0J");
-                        break; 
+                        break;
 
                     case UnicodeSymbol::Command::Delete:
                         // size_t old_pos = buffer.current_position;
@@ -118,14 +107,11 @@ public:
                     //     break;
 
                     case UnicodeSymbol::Command::CursorForward:
-                        // tty.MoveCursor(buffer.MoveCursorForward());
-                        // tty.Clear(buffer);
-                        // tty.UpdateOutput(buffer, buffer.MoveCursorForward());
+                        int display_shift = buffer.MoveCursorForward();
                         break;
 
                     case UnicodeSymbol::Command::CursorBack:
-                        // tty.Clear(buffer);
-                        // tty.UpdateOutput(buffer, buffer.MoveCursorBackward());
+                        int display_shift = buffer.MoveCursorBackward();
                         break;
 
                     // case UnicodeSymbol::Command::CursorPosition:
