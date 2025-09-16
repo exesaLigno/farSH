@@ -581,9 +581,13 @@ private:
                 case I::Relation::Inside: return true;
                 case I::Relation::Ambigous: return false;
                 case I::Relation::Before:
+                    if (middle_idx == 0)
+                        return false;
                     end_idx = middle_idx - 1;
                     break;
                 case I::Relation::After:
+                    if (middle_idx == array_size - 1)
+                        return false;
                     start_idx = middle_idx + 1;
                     break;
                 default: return false;
