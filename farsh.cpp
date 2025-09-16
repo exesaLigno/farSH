@@ -61,7 +61,7 @@ public:
 
         while (true)
         {
-            Event event = tty.Fetch();
+            UnicodeSymbol event = tty.Fetch();
             
             // if (event.Is(Event::Type::Input) and event.GetSymbol().IsCorrect())
             //     event.GetSymbol().WriteTo(stdout);
@@ -80,7 +80,7 @@ public:
                 // buffer.Insert(event.GetSymbol());
                 // printf("\e8\e[0J");
                 // buffer.WriteTo(stdout);
-                printf("")
+                printf("");
             }
 
             else
@@ -134,7 +134,7 @@ public:
                     //     break;
 
                     default:
-                        event.GetSymbol().DebugWriteTo(stdout);
+                        event.DebugWriteTo(stdout);
                         break;
                 }
             }
