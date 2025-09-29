@@ -67,6 +67,8 @@ public:
 
     UnicodeSymbol Fetch()
     {
+        FetchSize();
+        
         FILE* current_stream = in;
 
         return UnicodeSymbol::CreateFromStream([current_stream]() {
@@ -108,11 +110,10 @@ public:
 
     void ClearLine()
     {
-        auto columns = terminalCols;
         FetchSize();
 
-        int32_t rows_shift = cursor_position / columns;
-        int32_t columns_shift = cursor_position % columns;
+        int32_t rows_shift = cursor_position / terminalCols;
+        int32_t columns_shift = cursor_position % terminalCols;
 
         MoveCursor(rows_shift, columns_shift);
 
@@ -121,7 +122,7 @@ public:
         fputs("\e[J", out);
     }
 
-    void Write(const UnicodeSymbol& symbol)
+    void Write(const UnicodeSymbol& symbol, bool last_symbol = false)
     {
         FetchSize();
 
@@ -136,7 +137,7 @@ public:
         cursor_position += symbol.DisplayWidth();
         symbol.WriteTo(out);
 
-        if (cursor_position % terminalCols == 0)
+        if (cursor_position % terminalCols == 0 and last_symbol)
             fprintf(out, "\n");
     }
 };

@@ -20,17 +20,7 @@ private:
     int inputStartColumn = 0;
     UnicodeBuffer buffer;
 
-    
-
 public:
-    static FarSH* instance;
-
-    static void handle_sigwinch(int signum)
-    {
-        if (FarSH::instance)
-            instance->Redraw();
-    }
-
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
     {
         printf("\e[%u;%uH", row, column);
@@ -66,7 +56,7 @@ public:
         bool restore_cursor = false;
         for (size_t idx = 0; idx < buffer.bufferLength; idx++)
         {
-            tty.Write(buffer[idx]);
+            tty.Write(buffer[idx], idx == buffer.bufferLength - 1);
             if (idx == buffer.displayCursorPosition)
             {
                 restore_cursor = true;
@@ -80,10 +70,6 @@ public:
     void Run()
     {
         // prompt.Print();
-
-        FarSH::instance = this;
-
-        std::signal(SIGWINCH, handle_sigwinch);
 
         while (true)
         {
@@ -173,5 +159,3 @@ public:
         return 0;
     }
 };
-
-FarSH* FarSH::instance = nullptr;
