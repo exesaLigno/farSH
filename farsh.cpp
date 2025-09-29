@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <ctime>
 #include <cstring>
+#include <csignal>
 
 #include "prompt.cpp"
 #include "tty.cpp"
@@ -19,7 +20,17 @@ private:
     int inputStartColumn = 0;
     UnicodeBuffer buffer;
 
+    
+
 public:
+    static FarSH* instance;
+
+    static void handle_sigwinch(int signum)
+    {
+        if (FarSH::instance)
+            instance->Redraw();
+    }
+
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
     {
         printf("\e[%u;%uH", row, column);
@@ -45,85 +56,106 @@ public:
     //     PrintAt(0, 0, header);
     // }
 
-    void FillDynamicString(const UnicodeBuffer& buffer, UnicodeString& dynamic_string, bool completing = true)
-    {
+    // void FillDynamicString(const UnicodeBuffer& buffer, UnicodeString& dynamic_string, bool completing = true)
+    // {
 
+    // }
+    void Redraw(int signum = 0)
+    {
+        tty.ClearLine();
+        bool restore_cursor = false;
+        for (size_t idx = 0; idx < buffer.bufferLength; idx++)
+        {
+            tty.Write(buffer[idx]);
+            if (idx == buffer.displayCursorPosition)
+            {
+                restore_cursor = true;
+                tty.StoreCursorPosition();
+            }
+        }
+        if (restore_cursor)
+            tty.LoadCursorPosition();
     }
 
     void Run()
     {
-        prompt.Print();
-        // fprintf(stdout, "\e[6n");
+        // prompt.Print();
+
+        FarSH::instance = this;
+
+        std::signal(SIGWINCH, handle_sigwinch);
 
         while (true)
         {
-            UnicodeSymbol event = tty.Fetch();
+            UnicodeSymbol symbol = tty.Fetch();
             
+            // printf("%d", symbol.DisplayWidth());
+            // continue;
+
             // if (event.Is(Event::Type::Input) and event.GetSymbol().IsCorrect())
             //     event.GetSymbol().WriteTo(stdout);
 
-
-            if (not event.IsCommand())
+            if (not symbol.IsCommand())
             {
-                tty.ClearDynamicString();
-                FillDynamicString(buffer, tty.DynamicString());
-                tty.PrintDynamicString();
+                // printf("%c", symbol.GetByte(0));
+                buffer.Insert(symbol);
+                Redraw();
             }
 
-            else
-            {
-                switch (event.GetCommand())
-                {
-                    case UnicodeSymbol::Command::LineFeed:
-                        tty.ClearDynamicString();
-                        FillDynamicString(buffer, tty.DynamicString(), true);
-                        tty.PrintDynamicString();
-                        printf("\n");
-                        buffer.Reset();
-                        fprintf(stdout, "\e[0J");
-                        break;
+            // else
+            // {
+            //     switch (event.GetCommand())
+            //     {
+            //         case UnicodeSymbol::Command::LineFeed:
+            //             tty.ClearDynamicString();
+            //             FillDynamicString(buffer, tty.DynamicString(), true);
+            //             tty.PrintDynamicString();
+            //             printf("\n");
+            //             buffer.Reset();
+            //             fprintf(stdout, "\e[0J");
+            //             break;
 
-                    case UnicodeSymbol::Command::Delete:
-                        // size_t old_pos = buffer.current_position;
-                        // tty.Clear(buffer);
-                        // tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
-                        // // buffer.ClearSymbolBefore();
-                        // printf("\e[%d;%dH", inputStartRow, inputStartColumn);
-                        // printf("\e[0J");
-                        // buffer.WriteTo();
-                        // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
-                        break;
+            //         case UnicodeSymbol::Command::Delete:
+            //             // size_t old_pos = buffer.current_position;
+            //             // tty.Clear(buffer);
+            //             // tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
+            //             // // buffer.ClearSymbolBefore();
+            //             // printf("\e[%d;%dH", inputStartRow, inputStartColumn);
+            //             // printf("\e[0J");
+            //             // buffer.WriteTo();
+            //             // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+            //             break;
 
-                    // case Event::Command::Stop:
-                    //     printf("Buy!\n");
-                    //     break;
+            //         // case Event::Command::Stop:
+            //         //     printf("Buy!\n");
+            //         //     break;
 
-                    // case Event::Command::ArrowUp:
-                    //     printf("↑");
-                    //     break;
+            //         // case Event::Command::ArrowUp:
+            //         //     printf("↑");
+            //         //     break;
 
-                    // case Event::Command::ArrowDown:
-                    //     printf("↓");
-                    //     break;
+            //         // case Event::Command::ArrowDown:
+            //         //     printf("↓");
+            //         //     break;
 
-                    case UnicodeSymbol::Command::CursorForward:
-                        int display_shift = buffer.MoveCursorForward();
-                        break;
+            //         case UnicodeSymbol::Command::CursorForward:
+            //             int display_shift = buffer.MoveCursorForward();
+            //             break;
 
-                    case UnicodeSymbol::Command::CursorBack:
-                        int display_shift = buffer.MoveCursorBackward();
-                        break;
+            //         case UnicodeSymbol::Command::CursorBack:
+            //             int display_shift = buffer.MoveCursorBackward();
+            //             break;
 
-                    // case UnicodeSymbol::Command::CursorPosition:
-                    //     inputStartRow = event.GetCSIParameter(0);
-                    //     inputStartColumn = event.GetCSIParameter(1);
-                    //     break;
+            //         // case UnicodeSymbol::Command::CursorPosition:
+            //         //     inputStartRow = event.GetCSIParameter(0);
+            //         //     inputStartColumn = event.GetCSIParameter(1);
+            //         //     break;
 
-                    default:
-                        event.DebugWriteTo(stdout);
-                        break;
-                }
-            }
+            //         default:
+            //             event.DebugWriteTo(stdout);
+            //             break;
+            //     }
+            // }
 
             // // if (symbol != -1)
             // //     printf("%d\n", symbol);
@@ -141,3 +173,5 @@ public:
         return 0;
     }
 };
+
+FarSH* FarSH::instance = nullptr;

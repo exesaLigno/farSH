@@ -6,9 +6,10 @@
 #include <sys/ioctl.h>
 #include <csignal>
 #include <cstdio>
+#include <cstdint>
 
-#include "event.cpp"
-#include "string.cpp"
+#include "stack.hpp"
+#include "symbol.cpp"
 
 class TTY
 {
@@ -18,9 +19,12 @@ private:
     uint16_t terminalRows = 0;
     uint16_t terminalCols = 0;
 
-    UnicodeString dynamicString;
+    FILE* in = stdin;
+    FILE* out = stdout;
 
-    FILE* stream = stdout;
+    size_t cursor_position = 0;
+
+    Stack<size_t> cursor_positions_storage;
 
     bool FetchSize()
     {
@@ -63,9 +67,7 @@ public:
 
     UnicodeSymbol Fetch()
     {
-        FetchSize();
-
-        FILE* current_stream = stream;
+        FILE* current_stream = in;
 
         return UnicodeSymbol::CreateFromStream([current_stream]() {
             while (true)
@@ -77,43 +79,64 @@ public:
         });
     }
 
-    UnicodeString& DynamicString()
+    void MoveCursor(int32_t rows_shift, int32_t columns_shift)
     {
-        return dynamicString;
+        if (columns_shift)
+            fprintf(out, "\e[%d%c", abs(columns_shift), columns_shift > 0 ? 'D' : 'C');
+
+        if (rows_shift)
+            fprintf(out, "\e[%d%c", abs(rows_shift), rows_shift > 0 ? 'A' : 'B');
     }
 
-    void ClearDynamicString()
+    void StoreCursorPosition()
+    {
+        cursor_positions_storage.Push(cursor_position);
+    }
+
+    void LoadCursorPosition()
+    {
+        size_t loaded_position = cursor_positions_storage.Pop();
+
+        /// TODO: Implement shift calculation
+        int32_t rows_shift = 0;
+        int32_t columns_shift = 0;
+
+        MoveCursor(rows_shift, columns_shift);
+
+        cursor_position = loaded_position;
+    }
+
+    void ClearLine()
+    {
+        auto columns = terminalCols;
+        FetchSize();
+
+        int32_t rows_shift = cursor_position / columns;
+        int32_t columns_shift = cursor_position % columns;
+
+        MoveCursor(rows_shift, columns_shift);
+
+        cursor_position = 0;
+
+        fputs("\e[J", out);
+    }
+
+    void Write(const UnicodeSymbol& symbol)
     {
         FetchSize();
-        size_t rows_up = dynamicString.DisplayWidth() / terminalCols;
-        size_t columns_back = dynamicString.DisplayWidth() % terminalCols;
+
+        auto width = symbol.DisplayWidth();
         
-        if (rows_up != 0)
-            fprintf(stream, "\e[%dA", rows_up);
-        if (columns_back != 0)
-            fprintf(stream, "\e[%dD", columns_back);
+        if ((cursor_position % terminalCols) + width > terminalCols)
+        {
+            cursor_position += terminalCols - cursor_position % terminalCols;
+            fprintf(out, "\n");
+        }
 
-        fprintf(stream, "\e[J");
-    }
+        cursor_position += symbol.DisplayWidth();
+        symbol.WriteTo(out);
 
-    void PrintDynamicString()
-    {
-        dynamicString.WriteTo(stream);
-
-        FetchSize();
-
-        size_t target_row = dynamicString.DisplaCursorPosition() / terminalCols;
-        size_t target_column = dynamicString.DisplaCursorPosition() % terminalCols;
-
-        size_t current_row = dynamicString.DisplayWidth() / terminalCols;
-        size_t current_column = dynamicString.DisplayWidth() % terminalCols;
-
-        int rows_shift = target_row - current_row;
-        int columns_shift = target_column - current_column;
-
-        if (rows_shift != 0)
-            fprintf(stream, "\e%d%c", abs(rows_shift), rows_shift < 0 ? 'A' : 'B');
-        if (columns_shift != 0)
-            fprintf(stream, "\e%d%c", abs(columns_shift), columns_shift < 0 ? 'D' : 'C');
+        if (cursor_position % terminalCols == 0)
+            fprintf(out, "\n");
     }
 };

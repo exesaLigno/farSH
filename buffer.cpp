@@ -119,4 +119,9 @@ public:
         for (size_t idx = 0; idx < bufferLength; idx++)
             data[idx].WriteTo(fileno);
     }
+
+    UnicodeSymbol operator[](size_t idx) const
+    {
+        return data[idx];
+    }
 };

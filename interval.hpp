@@ -2,8 +2,9 @@
 
 #include <cassert>
 #include <cstdint>
+#include <concepts>
 
-template<typename T>
+template<std::totally_ordered T>
 class Interval
 {
 private:

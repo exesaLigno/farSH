@@ -3,6 +3,9 @@
 
 #include "interval.hpp"
 
+class Test
+{};
+
 #define Decode(what) what == Interval<wchar_t>::Relation::Equal ? "Equal" : \
                      what == Interval<wchar_t>::Relation::Inside ? "Inside" : \
                      what == Interval<wchar_t>::Relation::Contains ? "Contains" : \
