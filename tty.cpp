@@ -23,6 +23,7 @@ private:
     FILE* out = stdout;
 
     size_t cursor_position = 0;
+    size_t maximum_cursor_position = 0;
 
     Stack<size_t> cursor_positions_storage;
 
@@ -102,7 +103,12 @@ public:
         int32_t cursor_position_shift = cursor_position - loaded_position;
 
         int32_t rows_shift = 0;
-        int32_t columns_shift = 0;
+        int32_t columns_shift = cursor_position_shift <= cursor_position % terminalCols ? cursor_position_shift : cursor_position % terminalCols;
+        cursor_position_shift -= columns_shift;
+
+        rows_shift += cursor_position_shift / terminalCols + (cursor_position_shift % terminalCols != 0);
+        if (cursor_position_shift % terminalCols != 0)
+            columns_shift -= terminalCols - cursor_position_shift % terminalCols;
 
         MoveCursor(rows_shift, columns_shift);
 
@@ -116,13 +122,13 @@ public:
         int32_t rows_shift = cursor_position / terminalCols;
         int32_t columns_shift = cursor_position % terminalCols;
 
-        if (size_was_changed and cursor_position % terminalCols == 0 and not lf_placed)
+        if (size_was_changed and cursor_position % terminalCols == 0 and not lf_placed and cursor_position == maximum_cursor_position)
         {
             rows_shift -= 1;
             columns_shift = terminalCols - 1;
         }
 
-        else if (size_was_changed and lf_placed)
+        else if (size_was_changed and lf_placed and cursor_position == maximum_cursor_position)
         {
             rows_shift += 1;
             columns_shift = 0;
@@ -131,6 +137,7 @@ public:
         MoveCursor(rows_shift, columns_shift);
 
         cursor_position = 0;
+        maximum_cursor_position = 0;
 
         fputs("\e[J", out);
     }
@@ -144,10 +151,12 @@ public:
         if ((cursor_position % terminalCols) + width > terminalCols)
         {
             cursor_position += terminalCols - cursor_position % terminalCols;
+            maximum_cursor_position += terminalCols - cursor_position % terminalCols;
             fprintf(out, "\n");
         }
 
-        cursor_position += symbol.DisplayWidth();
+        cursor_position += width;
+        maximum_cursor_position += width;
         symbol.WriteTo(out);
         lf_placed = false;
 

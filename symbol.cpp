@@ -422,12 +422,12 @@ public:
         {
             Byte b = GetByte(1);
 
-            if (b >= 0x40 and b <= 0x5F)
-                return EscapeSequenceType::Fe;
-            else if (b == 0x5B)
+            if (b == 0x5B)
                 return EscapeSequenceType::ControlSequenceIntroducer;
             else if (b == 0x5D)
                 return EscapeSequenceType::OperatingSystemCommand;
+            else if (b >= 0x40 and b <= 0x5F)
+                return EscapeSequenceType::Fe;
             else if (b >= 0x60 and b <= 0x7E)
                 return EscapeSequenceType::Fs;
             else if (b >= 0x30 and b <= 0x3F)

@@ -56,12 +56,12 @@ public:
         bool restore_cursor = false;
         for (size_t idx = 0; idx < buffer.bufferLength; idx++)
         {
-            tty.Write(buffer[idx], idx == buffer.bufferLength - 1);
             if (idx == buffer.displayCursorPosition)
             {
                 restore_cursor = true;
                 tty.StoreCursorPosition();
             }
+            tty.Write(buffer[idx], idx == buffer.bufferLength - 1);
         }
         if (restore_cursor)
             tty.LoadCursorPosition();
@@ -81,63 +81,65 @@ public:
                 Redraw();
             }
 
-            // else
-            // {
-            //     switch (event.GetCommand())
-            //     {
-            //         case UnicodeSymbol::Command::LineFeed:
-            //             tty.ClearDynamicString();
-            //             FillDynamicString(buffer, tty.DynamicString(), true);
-            //             tty.PrintDynamicString();
-            //             printf("\n");
-            //             buffer.Reset();
-            //             fprintf(stdout, "\e[0J");
-            //             break;
+            else
+            {
+                switch (symbol.GetCommand())
+                {
+                    // case UnicodeSymbol::Command::LineFeed:
+                    //     tty.ClearDynamicString();
+                    //     FillDynamicString(buffer, tty.DynamicString(), true);
+                    //     tty.PrintDynamicString();
+                    //     printf("\n");
+                    //     buffer.Reset();
+                    //     fprintf(stdout, "\e[0J");
+                    //     break;
 
-            //         case UnicodeSymbol::Command::Delete:
-            //             // size_t old_pos = buffer.current_position;
-            //             // tty.Clear(buffer);
-            //             // tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
-            //             // // buffer.ClearSymbolBefore();
-            //             // printf("\e[%d;%dH", inputStartRow, inputStartColumn);
-            //             // printf("\e[0J");
-            //             // buffer.WriteTo();
-            //             // tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
-            //             break;
+                    // case UnicodeSymbol::Command::Delete:
+                    //     size_t old_pos = buffer.current_position;
+                    //     tty.Clear(buffer);
+                    //     tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
+                    //     // buffer.ClearSymbolBefore();
+                    //     printf("\e[%d;%dH", inputStartRow, inputStartColumn);
+                    //     printf("\e[0J");
+                    //     buffer.WriteTo();
+                    //     tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
+                    //     break;
 
-            //         // case Event::Command::Stop:
-            //         //     printf("Buy!\n");
-            //         //     break;
+                    // case Event::Command::Stop:
+                    //     printf("Buy!\n");
+                    //     break;
 
-            //         // case Event::Command::ArrowUp:
-            //         //     printf("↑");
-            //         //     break;
+                    // case Event::Command::ArrowUp:
+                    //     printf("↑");
+                    //     break;
 
-            //         // case Event::Command::ArrowDown:
-            //         //     printf("↓");
-            //         //     break;
+                    // case Event::Command::ArrowDown:
+                    //     printf("↓");
+                    //     break;
 
-            //         case UnicodeSymbol::Command::CursorForward:
-            //             int display_shift = buffer.MoveCursorForward();
-            //             break;
+                    case UnicodeSymbol::Command::CursorForward:
+                        buffer.MoveCursorForward();
+                        Redraw();
+                        break;
 
-            //         case UnicodeSymbol::Command::CursorBack:
-            //             int display_shift = buffer.MoveCursorBackward();
-            //             break;
+                    case UnicodeSymbol::Command::CursorBack:
+                        buffer.MoveCursorBackward();
+                        Redraw();
+                        break;
 
-            //         // case UnicodeSymbol::Command::CursorPosition:
-            //         //     inputStartRow = event.GetCSIParameter(0);
-            //         //     inputStartColumn = event.GetCSIParameter(1);
-            //         //     break;
+                    // case UnicodeSymbol::Command::CursorPosition:
+                    //     inputStartRow = event.GetCSIParameter(0);
+                    //     inputStartColumn = event.GetCSIParameter(1);
+                    //     break;
 
-            //         default:
-            //             event.DebugWriteTo(stdout);
-            //             break;
-            //     }
-            // }
+                    default:
+                        symbol.DebugWriteTo(stdout);
+                        break;
+                }
+            }
 
-            // // if (symbol != -1)
-            // //     printf("%d\n", symbol);
+            // if (symbol != -1)
+            //     printf("%d\n", symbol);
         }
     }
 
