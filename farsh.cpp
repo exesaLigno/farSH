@@ -74,16 +74,9 @@ public:
         while (true)
         {
             UnicodeSymbol symbol = tty.Fetch();
-            
-            // printf("%d", symbol.DisplayWidth());
-            // continue;
-
-            // if (event.Is(Event::Type::Input) and event.GetSymbol().IsCorrect())
-            //     event.GetSymbol().WriteTo(stdout);
 
             if (not symbol.IsCommand())
             {
-                // printf("%c", symbol.GetByte(0));
                 buffer.Insert(symbol);
                 Redraw();
             }

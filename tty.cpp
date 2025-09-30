@@ -99,7 +99,8 @@ public:
     {
         size_t loaded_position = cursor_positions_storage.Pop();
 
-        /// TODO: Implement shift calculation
+        int32_t cursor_position_shift = cursor_position - loaded_position;
+
         int32_t rows_shift = 0;
         int32_t columns_shift = 0;
 
