@@ -26,6 +26,8 @@ private:
 
     Stack<size_t> cursor_positions_storage;
 
+    bool lf_placed = false;
+
     bool FetchSize()
     {
         winsize size;
@@ -67,8 +69,6 @@ public:
 
     UnicodeSymbol Fetch()
     {
-        FetchSize();
-        
         FILE* current_stream = in;
 
         return UnicodeSymbol::CreateFromStream([current_stream]() {
@@ -110,10 +110,22 @@ public:
 
     void ClearLine()
     {
-        FetchSize();
+        bool size_was_changed = FetchSize();
 
         int32_t rows_shift = cursor_position / terminalCols;
         int32_t columns_shift = cursor_position % terminalCols;
+
+        if (size_was_changed and cursor_position % terminalCols == 0 and not lf_placed)
+        {
+            rows_shift -= 1;
+            columns_shift = terminalCols - 1;
+        }
+
+        else if (size_was_changed and lf_placed)
+        {
+            rows_shift += 1;
+            columns_shift = 0;
+        }
 
         MoveCursor(rows_shift, columns_shift);
 
@@ -136,8 +148,12 @@ public:
 
         cursor_position += symbol.DisplayWidth();
         symbol.WriteTo(out);
+        lf_placed = false;
 
         if (cursor_position % terminalCols == 0 and last_symbol)
-            fprintf(out, "\n");
+        {
+            lf_placed = true;
+            fputc('\n', out);
+        }
     }
 };
