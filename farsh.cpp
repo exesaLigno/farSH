@@ -20,6 +20,8 @@ private:
     int inputStartColumn = 0;
     UnicodeBuffer buffer;
 
+    bool lfPlacedAlready = false;
+
 public:
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
     {
@@ -33,24 +35,7 @@ public:
         printf("\e8");
     }
 
-    // void PrintHeader()
-    // {
-    //     char header[terminalCols + 10];
-    //     for (int i = 0; i < terminalCols + 10; i++)
-    //         header[i] = ' ';
-    //     header[terminalCols + 9] = 0;
-    //     int r = sprintf(header + 5, " Timestamp is %d! ", (int) time(NULL));
-    //     header[5 + r] = ' ';
-    //     strncpy(header, "\e[44m", 5);
-    //     strncpy(header + 5 + terminalCols, "\e[0m", 4);
-    //     PrintAt(0, 0, header);
-    // }
-
-    // void FillDynamicString(const UnicodeBuffer& buffer, UnicodeString& dynamic_string, bool completing = true)
-    // {
-
-    // }
-    void Redraw(int signum = 0)
+    void Redraw()
     {
         tty.ClearLine();
         bool restore_cursor = false;
@@ -65,6 +50,8 @@ public:
         }
         if (restore_cursor)
             tty.LoadCursorPosition();
+
+        lfPlacedAlready = tty.LFPlaced();
     }
 
     void Run()
@@ -85,37 +72,35 @@ public:
             {
                 switch (symbol.GetCommand())
                 {
-                    // case UnicodeSymbol::Command::LineFeed:
-                    //     tty.ClearDynamicString();
-                    //     FillDynamicString(buffer, tty.DynamicString(), true);
-                    //     tty.PrintDynamicString();
-                    //     printf("\n");
-                    //     buffer.Reset();
-                    //     fprintf(stdout, "\e[0J");
-                    //     break;
+                    case UnicodeSymbol::Command::LineFeed:
+                        Redraw();
+                        if (not lfPlacedAlready)
+                            printf("\n");
+                        buffer.Reset();
+                        tty.Reset();
+                        break;
 
-                    // case UnicodeSymbol::Command::Delete:
-                    //     size_t old_pos = buffer.current_position;
-                    //     tty.Clear(buffer);
-                    //     tty.UpdateOutput(buffer, buffer.ClearSymbolBefore());
-                    //     // buffer.ClearSymbolBefore();
-                    //     printf("\e[%d;%dH", inputStartRow, inputStartColumn);
-                    //     printf("\e[0J");
-                    //     buffer.WriteTo();
-                    //     tty.MoveCursor(buffer.current_position, inputStartRow, inputStartColumn);
-                    //     break;
+                    case UnicodeSymbol::Command::Delete:
+                        buffer.ClearSymbolBefore();
+                        Redraw();
+                        break;
 
-                    // case Event::Command::Stop:
-                    //     printf("Buy!\n");
-                    //     break;
+                    case UnicodeSymbol::Command::DeleteAfter:
+                        buffer.ClearSymbolAfter();
+                        Redraw();
+                        break;
 
-                    // case Event::Command::ArrowUp:
-                    //     printf("↑");
-                    //     break;
+                    case UnicodeSymbol::Command::EndOfTransmission:
+                        buffer.Insert(" \e[3;33m...dying in agony...\e[0m");
+                        Redraw();
+                        if (not lfPlacedAlready)
+                            printf("\n");
+                        return;
 
-                    // case Event::Command::ArrowDown:
-                    //     printf("↓");
-                    //     break;
+                    case UnicodeSymbol::Command::CursorUp:
+                    case UnicodeSymbol::Command::CursorDown:
+                        /// TODO: Implement history search
+                        break;
 
                     case UnicodeSymbol::Command::CursorForward:
                         buffer.MoveCursorForward();
@@ -127,19 +112,11 @@ public:
                         Redraw();
                         break;
 
-                    // case UnicodeSymbol::Command::CursorPosition:
-                    //     inputStartRow = event.GetCSIParameter(0);
-                    //     inputStartColumn = event.GetCSIParameter(1);
-                    //     break;
-
                     default:
                         symbol.DebugWriteTo(stdout);
                         break;
                 }
             }
-
-            // if (symbol != -1)
-            //     printf("%d\n", symbol);
         }
     }
 

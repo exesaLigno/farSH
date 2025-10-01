@@ -83,6 +83,7 @@ public:
         ScrollDown, SD = ScrollDown,
         HorizontalVerticalPosition, HVP = HorizontalVerticalPosition,
         SelectGraphicRendition, SGR = SelectGraphicRendition,
+        DeleteAfter,
 
         // Fe Escape Sequence
         SingleShiftTwo, SS2 = SingleShiftTwo,
@@ -227,6 +228,7 @@ private:
             case 0x54: return Command::ScrollDown;
             case 0x66: return Command::HorizontalVerticalPosition;
             case 0x6D: return Command::SelectGraphicRendition;
+            case 0x7E: return Command::DeleteAfter;
             default: return Command::None;
         }
     }
@@ -461,7 +463,7 @@ public:
                 break;
 
             case Type::EscapedSequence:
-                fprintf(fileno, "<Escaped sequence (%d bytes) \\e%s>", bytes_length, buf + sizeof(char));
+                fprintf(fileno, "<Escaped sequence (%d bytes) \\e%s>\n", bytes_length, buf + sizeof(char));
                 break;
 
             case Type::UnicodeSymbol:
