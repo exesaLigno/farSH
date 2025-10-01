@@ -166,4 +166,17 @@ public:
             fputc('\n', out);
         }
     }
+
+    void Reset()
+    {
+        cursor_position = 0;
+        maximum_cursor_position = 0;
+        cursor_positions_storage.Clear();
+        lf_placed = false;
+    }
+
+    bool LFPlaced()
+    {
+        return lf_placed;
+    }
 };
