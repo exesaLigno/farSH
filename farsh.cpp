@@ -24,6 +24,8 @@ private:
 
     bool lfPlacedAlready = false;
 
+    bool rudeMode = false;
+
 public:
     void SetCursorPosition(const unsigned int row, const unsigned int column) const
     {
@@ -46,7 +48,7 @@ public:
         lfPlacedAlready = tty.LFPlaced();
     }
 
-    void Redraw()
+    void Redraw(bool interactive = true)
     {
         tty.ClearLine();
         DrawGreeting();
@@ -84,11 +86,14 @@ public:
                 switch (symbol.GetCommand())
                 {
                     case UnicodeSymbol::Command::LineFeed:
-                        Redraw();
+                        Redraw(false);
                         if (not lfPlacedAlready)
                             printf("\n");
                         buffer.Reset();
                         tty.Reset();
+
+                        ExecuteCommand();
+
                         Redraw();
                         break;
 
@@ -124,13 +129,6 @@ public:
                         Redraw();
                         break;
 
-                        /*
-                        𜰰𜰱𜰲𜰳
-                        𜰴𜲦𜲧𜰷
-                        𜰸𜲬𜲭𜰻
-                        𜰼𜰽𜰾𜰿
-                        */
-
                     default:
                         symbol.DebugWriteTo(stdout);
                         break;
@@ -139,14 +137,8 @@ public:
         }
     }
 
-    int ExecuteCommand(const char* command)
+    int ExecuteCommand()
     {
-        if (!strncmp(command, "cd", 2))
-            chdir(command + 3);
-
-        else
-            printf("Command \"%s\" is not a program!\n", command);
-
-        return 0;
+        
     }
 };

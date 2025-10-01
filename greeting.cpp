@@ -60,7 +60,7 @@ private:
     }
 
 public:
-    char scheme[1000] = "\e[1;35m{username}\e[0m\e[1m@\e[1;36m{hostname}\e[0m \e[32m{cwd}\e[0m> ";
+    char scheme[1000] = "$> ";
 
     Greeting() { }
     Greeting(const char* _scheme)
