@@ -44,4 +44,9 @@ public:
             throw std::runtime_error("Can't pop from empty stack");
         return data[--current];
     }
+
+    void Clear()
+    {
+        current = 0;
+    }
 };
