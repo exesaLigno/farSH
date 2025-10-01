@@ -110,11 +110,17 @@ public:
         return symbol.DisplayWidth();
     }
 
-    void Insert(const char* str)
+    void Insert(const char sym)
     {
-        while (*str != '\0')
-            Insert(UnicodeSymbol::CreateFromStream([&str]() {
-                return *(str++);
+        Insert(UnicodeSymbol(sym));
+    }
+
+    void Insert(const char* str, size_t size = 0)
+    {
+        size_t idx = 0;
+        while ((size == 0 or idx < size) and str[idx] != '\0')
+            Insert(UnicodeSymbol::CreateFromStream([&str, &idx]() {
+                return str[idx++];
             }));
     }
 
