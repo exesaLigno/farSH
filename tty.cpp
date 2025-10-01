@@ -160,7 +160,7 @@ public:
         symbol.WriteTo(out);
         lf_placed = false;
 
-        if (cursor_position % terminalCols == 0 and last_symbol)
+        if (cursor_position % terminalCols == 0 and width != 0 and last_symbol)
         {
             lf_placed = true;
             fputc('\n', out);
