@@ -76,10 +76,13 @@ public:
 
     int ClearSymbolAfter()
     {
-        for (size_t idx = cursorPosition + 1; idx <= bufferLength; idx++)
-            data[idx - 1] = data[idx];
+        if (cursorPosition < bufferLength)
+        {
+            for (size_t idx = cursorPosition + 1; idx <= bufferLength; idx++)
+                data[idx - 1] = data[idx];
 
-        bufferLength--;
+            bufferLength--;
+        }
 
         return 0;
     }
@@ -105,6 +108,14 @@ public:
         }
 
         return symbol.DisplayWidth();
+    }
+
+    void Insert(const char* str)
+    {
+        while (*str != '\0')
+            Insert(UnicodeSymbol::CreateFromStream([&str]() {
+                return *(str++);
+            }));
     }
 
     void Reset()
