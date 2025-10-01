@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
-class Prompt
+class Greeting
 {
 private:
     size_t StrCopy(char* dst, const char* const src, size_t size = 0)
