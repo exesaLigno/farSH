@@ -6,7 +6,7 @@
 #include <cstring>
 #include <csignal>
 
-#include "prompt.cpp"
+#include "greeting.cpp"
 #include "tty.cpp"
 #include "buffer.cpp"
 
@@ -14,11 +14,13 @@ class FarSH
 {
 private:
     TTY tty;
-    Prompt prompt;
+    Greeting greeting;
     char cwd[2048] = { 0 };
     int inputStartRow = 0;
     int inputStartColumn = 0;
     UnicodeBuffer buffer;
+
+    UnicodeBuffer tmp_buffer;
 
     bool lfPlacedAlready = false;
 
@@ -35,9 +37,19 @@ public:
         printf("\e8");
     }
 
+    void DrawGreeting()
+    {
+        tmp_buffer.Reset();
+        greeting.WriteTo(tmp_buffer);
+        for (size_t idx = 0; idx < tmp_buffer.bufferLength; idx++)
+            tty.Write(tmp_buffer[idx], idx == buffer.bufferLength - 1);
+        lfPlacedAlready = tty.LFPlaced();
+    }
+
     void Redraw()
     {
         tty.ClearLine();
+        DrawGreeting();
         bool restore_cursor = false;
         for (size_t idx = 0; idx < buffer.bufferLength; idx++)
         {
@@ -56,8 +68,7 @@ public:
 
     void Run()
     {
-        // prompt.Print();
-
+        Redraw();
         while (true)
         {
             UnicodeSymbol symbol = tty.Fetch();
@@ -78,6 +89,7 @@ public:
                             printf("\n");
                         buffer.Reset();
                         tty.Reset();
+                        Redraw();
                         break;
 
                     case UnicodeSymbol::Command::Delete:
@@ -111,6 +123,13 @@ public:
                         buffer.MoveCursorBackward();
                         Redraw();
                         break;
+
+                        /*
+                        𜰰𜰱𜰲𜰳
+                        𜰴𜲦𜲧𜰷
+                        𜰸𜲬𜲭𜰻
+                        𜰼𜰽𜰾𜰿
+                        */
 
                     default:
                         symbol.DebugWriteTo(stdout);

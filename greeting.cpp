@@ -3,140 +3,121 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#include "buffer.cpp"
+
 class Greeting
 {
 private:
-    size_t StrCopy(char* dst, const char* const src, size_t size = 0)
+    static constexpr int hostNameBufferSize = 1000;
+    static constexpr int workDirBufferSize = 4000;
+
+    static const char* GetUserName()
     {
-        size_t idx = 0;
-
-        for (idx = 0; src[idx] != '\0' and (size == 0 or idx < size); idx++)
-            dst[idx] = src[idx];
-
-        return idx;
+        return getlogin();
     }
 
-    bool StartsWith(const char* str, const char* substr)
+    static const char* GetHostName()
     {
-        for (size_t idx = 0; substr[idx] != '\0'; idx++)
-        {
-            if (str[idx] == '\0' or str[idx] != substr[idx])
-                return false;
-        }
-
-        return true;
+        static char hostname[hostNameBufferSize] = { 0 };
+        gethostname(hostname, hostNameBufferSize);
+        hostname[hostNameBufferSize - 1] = 0;
+        return hostname;
     }
 
-    size_t WriteUserName(char* dst)
+    static const uid_t GetUid()
     {
-        return StrCopy(dst, getlogin());
+        return getuid();
     }
 
-    size_t WriteHostName(char* dst)
+    static const passwd* GetPwuid()
     {
-        gethostname(dst, 100);
-        return strlen(dst);
+        return getpwuid(GetUid());
     }
 
-    void ProcessCwdString(char* str, bool shorten, bool use_tilde)
+    static const char* GetHomeDir()
     {
-        char* str_read = str;
-        char* str_write = str;
-
-        passwd* pwd = getpwuid(getuid());
-
-        size_t homedir_len = strlen(pwd->pw_dir);
-
-        if (use_tilde and StartsWith(str_read, pwd->pw_dir))
-        {
-            str_read += homedir_len;
-            *(str_write++) = '~';
-        }
-
-        char* last_start = nullptr;
-
-        while (*str_read != '\0')
-        {
-            if (*str_read == '/')
-            {
-                if (last_start)
-                {
-                    if (shorten)
-                        *(str_write++) = *last_start;
-                    else
-                        str_write += StrCopy(str_write, last_start, str_read - last_start);
-                }
-
-                *(str_write++) = *(str_read++);
-                last_start = str_read;
-            }
-            else
-                str_read++;
-        }
-
-        if (last_start)
-            str_write += StrCopy(str_write, last_start, str_read - last_start);
-
-        *str_write = '\0';
+        return GetPwuid()->pw_dir;
     }
 
-    size_t WriteCwdShort(char* dst)
+    static const char* GetWorkDir(bool shorten_home_dir = false, bool shorten_parential_dir_path = false, bool truncate_parential_dir_path = false)
     {
-        char buffer[1000] = { 0 };
-        getcwd(buffer, 1000);
-        ProcessCwdString(buffer, true, true);
-        return StrCopy(dst, buffer);
+        static char workdir[workDirBufferSize] = { 0 };
+        getcwd(workdir, workDirBufferSize);
+        workdir[workDirBufferSize - 1] = 0;
+        return workdir;
     }
 
-    size_t ProcessEntry(char* dst, const char* const entry_name)
+    static const char* GetInfo(const char* const entry_name, size_t entry_name_size)
     {
-        if (!strcmp(entry_name, "username"))
-            return WriteUserName(dst);
-        else if (!strcmp(entry_name, "hostname"))
-            return WriteHostName(dst);
-        else if (!strcmp(entry_name, "cwd_short"))
-            return WriteCwdShort(dst);
+        if (!strncmp(entry_name, "username", entry_name_size))
+            return GetUserName();
+        else if (!strncmp(entry_name, "hostname", entry_name_size))
+            return GetHostName();
+        else if (!strncmp(entry_name, "cwd", entry_name_size))
+            return GetWorkDir();
         else
             return 0;
     }
 
 public:
-    char scheme[1000] = "\e[1;35m{username}\e[0m\e[1m@\e[1;36m{hostname}\e[0m \e[32m{cwd_short}\e[0m> ";
+    char scheme[1000] = "\e[1;35m{username}\e[0m\e[1m@\e[1;36m{hostname}\e[0m \e[32m{cwd}\e[0m> ";
 
-    void Substitute(const char** scheme_ptr, char** buffer_ptr)
+    Greeting() { }
+    Greeting(const char* _scheme)
     {
-        char entry[1000] = { 0 };
-        char* entry_ptr = entry;
-        (*scheme_ptr)++;
-        
-        while (**scheme_ptr != '}')
-            *(entry_ptr++) = *((*scheme_ptr)++);
-        *entry_ptr = 0;
-        (*scheme_ptr)++;
-
-        *buffer_ptr += ProcessEntry(*buffer_ptr, entry);
+        strcpy(scheme, _scheme);
     }
 
-    void Print(int error = 0)
+    void WriteTo(UnicodeBuffer& buffer)
     {
-        char* buffer = new char[1000] { 0 };
-        char* buffer_ptr = buffer;
-
         const char* scheme_ptr = scheme;
+        const char* substr_start = scheme_ptr;
 
-        while (*scheme_ptr != 0)
+        // enum class State
+        // {
+        //     PlainText, EntityName
+        // };
+
+        // State state = State::PlainText;
+
+        for (const char* scheme_ptr = scheme; *scheme_ptr != 0; scheme_ptr++)
         {
-            switch (*scheme_ptr)
+            if (*scheme_ptr == '{')
             {
-                case '{':
-                    Substitute(&scheme_ptr, &buffer_ptr);
-                    break;
-                default:
-                    *(buffer_ptr++) = *(scheme_ptr++);
-                    break;
+                size_t size = scheme_ptr - substr_start;
+                if (size > 0)
+                    buffer.Insert(substr_start, size);
+                substr_start = scheme_ptr + 1;
+                continue;
+            }
+
+            if (*scheme_ptr == '}')
+            {
+                buffer.Insert(GetInfo(substr_start, scheme_ptr - substr_start));
+                substr_start = scheme_ptr + 1;
             }
         }
 
-        printf("%s\e7", buffer);
+        buffer.Insert(substr_start, scheme_ptr - substr_start);
     }
+
+    // void WriteTo(char* buffer)
+    // {
+    //     char* buffer_ptr = buffer;
+
+    //     const char* scheme_ptr = scheme;
+
+    //     while (*scheme_ptr != 0)
+    //     {
+    //         switch (*scheme_ptr)
+    //         {
+    //             case '{':
+    //                 Substitute(&scheme_ptr, &buffer_ptr);
+    //                 break;
+    //             default:
+    //                 *(buffer_ptr++) = *(scheme_ptr++);
+    //                 break;
+    //         }
+    //     }
+    // }
 };
