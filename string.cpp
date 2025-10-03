@@ -46,7 +46,7 @@ public:
         const char* string_ptr = string;
         while (*string_ptr != '\0')
         {
-            AppendSymbolAndReallocate(UnicodeSymbol::CreateFromStream([&string_ptr]() {
+            AppendSymbolAndReallocate(UnicodeSymbol::Create([&string_ptr]() {
                 return *(string_ptr++);
             }));
         }
@@ -86,7 +86,7 @@ public:
         const char* string_ptr = string;
         while (*string_ptr != '\0')
         {
-            AppendSymbolAndReallocate(UnicodeSymbol::CreateFromStream([&string_ptr]() {
+            AppendSymbolAndReallocate(UnicodeSymbol::Create([&string_ptr]() {
                 return *(string_ptr++);
             }));
         }

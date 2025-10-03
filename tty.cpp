@@ -72,7 +72,7 @@ public:
     {
         FILE* current_stream = in;
 
-        return UnicodeSymbol::CreateFromStream([current_stream]() {
+        return UnicodeSymbol::Create([current_stream]() {
             while (true)
             {
                 int byte = getc(current_stream);

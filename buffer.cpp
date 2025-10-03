@@ -119,7 +119,7 @@ public:
     {
         size_t idx = 0;
         while ((size == 0 or idx < size) and str[idx] != '\0')
-            Insert(UnicodeSymbol::CreateFromStream([&str, &idx]() {
+            Insert(UnicodeSymbol::Create([&str, &idx]() {
                 return str[idx++];
             }));
     }
