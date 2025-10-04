@@ -107,67 +107,6 @@ private:
     Type type = Type::None;
     uint8_t display_width = 0;
 
-    // Byte GetIdentityByteByCommand(Command cmd)
-    // {
-    //     switch (cmd)
-    //     {
-    //         case Command::Null: return 0x00;
-    //         case Command::StartOfHeading: return 0x01;
-    //         case Command::StartOfText: return 0x02;
-    //         case Command::EndOfText: return 0x03;
-    //         case Command::EndOfTransmission: return 0x04;
-    //         case Command::Enquiry: return 0x05;
-    //         case Command::Acknowledge: return 0x06;
-    //         case Command::Bell: return 0x07;
-    //         case Command::Backspace: return 0x08;
-    //         case Command::HorizontalTab: return 0x09;
-    //         case Command::LineFeed: return 0x0A;
-    //         case Command::VerticalTabulation: return 0x0B;
-    //         case Command::FormFeed: return 0x0C;
-    //         case Command::CarriageReturn: return 0x0D;
-    //         case Command::ShiftOut: return 0x0E;
-    //         case Command::ShiftIn: return 0x0F;
-    //         case Command::DataLinkEscape: return 0x10;
-    //         case Command::DeviceControlOne: return 0x11;
-    //         case Command::DeviceControlTwo: return 0x12;
-    //         case Command::DeviceControlThree: return 0x13;
-    //         case Command::DeviceControlFour: return 0x14;
-    //         case Command::NegativeAcknowledge: return 0x15;
-    //         case Command::SynchronousIdle: return 0x16;
-    //         case Command::EndOfTransmissionBlock: return 0x17;
-    //         case Command::Cancel: return 0x18;
-    //         case Command::EndOfMedium: return 0x19;
-    //         case Command::Substitute: return 0x1A;
-    //         case Command::Escape: return 0x1B;
-    //         case Command::FileSeparator: return 0x1C;
-    //         case Command::GroupSeparator: return 0x1D;
-    //         case Command::RecordSeparator: return 0x1E;
-    //         case Command::UnitSeparator: return 0x1F;
-    //         case Command::Delete: return 0x7F;
-    //         case Command::CursorUp: return 0x41;
-    //         case Command::CursorDown: return 0x42;
-    //         case Command::CursorForward: return 0x43;
-    //         case Command::CursorBack: return 0x44;
-    //         case Command::CursorNextLine: return 0x45;
-    //         case Command::CursorPreviousLine: return 0x46;
-    //         case Command::CursorHorizontalAbsolute: return 0x47;
-    //         case Command::CursorPosition: return 0x48;
-    //         case Command::EraseInDisplay: return 0x4A;
-    //         case Command::EraseInLine: return 0x4B;
-    //         case Command::ScrollUp: return 0x53;
-    //         case Command::ScrollDown: return 0x54;
-    //         case Command::HorizontalVerticalPosition: return 0x66;
-    //         case Command::SelectGraphicRendition: return 0x6D;
-    //         case Command::SingleShiftTwo: return 0x4E;
-    //         case Command::SingleShiftThree: return 0x4F;
-    //         case Command::DeviceControlString: return 0x50;
-    //         case Command::StringTerminator: return 0x5C;
-    //         case Command::StartOfString: return 0x58;
-    //         case Command::PrivacyMessage: return 0x5E;
-    //         case Command::ApplicationProgramCommand: return 0x5F;
-    //     }
-    // }
-
     Command GetControlCodeCommand() const
     {
         switch (GetByte(0))
