@@ -438,6 +438,20 @@ public:
         return *this;
     }
 
+    void CloneFrom(const UnicodeSymbol& other) noexcept
+    {
+        type = other.type;
+        bytes_length = other.bytes_length;
+        display_width = other.display_width;
+
+        bool extended = IsExtended();
+
+        if (extended)
+            extendedBytes = new Byte[bytes_length];
+
+        memcpy(extended ? extendedBytes : bytes, extended ? other.extendedBytes : other.bytes, baseSize);
+    }
+
     UnicodeSymbol(UnicodeSymbol&& other) noexcept
     {
         bytes_length = other.bytes_length;
