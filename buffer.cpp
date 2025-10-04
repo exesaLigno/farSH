@@ -12,50 +12,34 @@ public:
     size_t bufferCapacity = 512;
     size_t bufferLength = 0;
     size_t cursorPosition = 0;
-    size_t displayCursorPosition = 0;
 
-    int MoveCursorForward()
+    void MoveCursorForward()
     {
         uint8_t display_shift = 0;
 
-        while (display_shift == 0)
+        while (display_shift == 0 and cursorPosition < bufferLength)
         {
-            if (cursorPosition == bufferLength)
-                return 0;
-
             display_shift = data[cursorPosition].DisplayWidth();
             cursorPosition++;
-            displayCursorPosition += display_shift;
         }
-
-        return display_shift;
     }
 
-    int MoveCursorBackward()
+    void MoveCursorBackward()
     {
         uint8_t display_shift = 0;
 
-        while (display_shift == 0)
+        while (display_shift == 0 and cursorPosition > 0)
         {
-            if (cursorPosition == 0)
-                return 0;
-
             cursorPosition--;
             display_shift = data[cursorPosition].DisplayWidth();
-            displayCursorPosition -= display_shift;
         }
-
-        return -display_shift;
     }
 
-    int ClearSymbolBefore()
+    void ClearSymbolBefore()
     {
         uint8_t removed_display_width = 0;
 
-        if (cursorPosition == 0)
-            return 0;
-
-        while (removed_display_width == 0)
+        while (removed_display_width == 0 and cursorPosition > 0)
         {
             removed_display_width = data[cursorPosition - 1].DisplayWidth();
 
@@ -64,10 +48,7 @@ public:
 
             bufferLength--;
             cursorPosition--;
-            displayCursorPosition -= removed_display_width;
         }
-
-        return -removed_display_width;
     }
 
     // void ClearWordBefore()
@@ -87,13 +68,12 @@ public:
         return 0;
     }
 
-    int Insert(UnicodeSymbol symbol)
+    void Insert(UnicodeSymbol symbol)
     {
         if (cursorPosition == bufferLength)
         {
             bufferLength++;
             data[cursorPosition++] = symbol;
-            displayCursorPosition += symbol.DisplayWidth();
         }
 
         else
@@ -104,10 +84,7 @@ public:
                 data[idx] = data[idx - 1];
 
             data[cursorPosition++] = symbol;
-            displayCursorPosition += symbol.DisplayWidth();
         }
-
-        return symbol.DisplayWidth();
     }
 
     void Insert(const char sym)
@@ -128,7 +105,6 @@ public:
     {
         bufferLength = 0;
         cursorPosition = 0;
-        displayCursorPosition = 0;
     }
 
     void WriteTo(FILE* fileno = stdout) const

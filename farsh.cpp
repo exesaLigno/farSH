@@ -55,7 +55,7 @@ public:
         bool restore_cursor = false;
         for (size_t idx = 0; idx < buffer.bufferLength; idx++)
         {
-            if (idx == buffer.displayCursorPosition)
+            if (idx == buffer.cursorPosition)
             {
                 restore_cursor = true;
                 tty.StoreCursorPosition();
@@ -139,6 +139,6 @@ public:
 
     int ExecuteCommand()
     {
-        
+        return 0;
     }
 };
