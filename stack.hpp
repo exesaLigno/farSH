@@ -30,6 +30,15 @@ public:
         data = new T[capacity];
     }
 
+    ~Stack()
+    {
+        if (data)
+        {
+            delete[] data;
+            data = nullptr;
+        }
+    }
+
     void Push(T elem)
     {
         if (current >= capacity)
