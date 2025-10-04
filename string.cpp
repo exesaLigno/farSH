@@ -25,12 +25,21 @@ private:
         delete[] old_buffer;
     }
 
-    void AppendSymbolAndReallocate(const UnicodeSymbol& sym)
+    UnicodeSymbol& ReallocateAndGetFirstEmptySymbolLink()
     {
         if (length >= bufferSize)
             ReallocateBuffer();
-        buffer[length++] = sym;
-        width += sym.DisplayWidth();
+
+        return buffer[length];
+    }
+
+    void ReallocateAndInsert(const UnicodeSymbol& symbol)
+    {
+        if (length >= bufferSize)
+            ReallocateBuffer();
+
+        buffer[length++] = symbol;
+        width += symbol.DisplayWidth();
     }
 
 public:
@@ -41,14 +50,16 @@ public:
 
     UnicodeString(const char* string)
     {
-        ReallocateBuffer(0, initialBufferSize);
+        ReallocateBuffer(0, strlen(string));
 
-        const char* string_ptr = string;
-        while (*string_ptr != '\0')
+        const Byte* string_ptr = (const Byte*) string;
+
+        while (*string_ptr != 0)
         {
-            AppendSymbolAndReallocate(UnicodeSymbol::Create([&string_ptr]() {
-                return *(string_ptr++);
-            }));
+            UnicodeSymbol& current = ReallocateAndGetFirstEmptySymbolLink();
+            UnicodeSymbol::CreateInplace(current, string_ptr);
+            length++;
+            width += current.DisplayWidth();
         }
     }
 
@@ -70,32 +81,38 @@ public:
     UnicodeString& operator+=(const UnicodeString& string)
     {
         for (size_t idx = 0; idx < string.length; idx++)
-            AppendSymbolAndReallocate(string.buffer[idx]);
+        {
+            UnicodeSymbol& current = ReallocateAndGetFirstEmptySymbolLink();
+            current = string.buffer[idx];
+            length++;
+            width += current.DisplayWidth();
+        }
 
         return *this;
     }
 
     UnicodeString& operator+=(const UnicodeSymbol& symbol)
     {
-        AppendSymbolAndReallocate(symbol);
+        ReallocateAndInsert(symbol);
         return *this;
     }
 
     UnicodeString& operator+=(const char* string)
     {
-        const char* string_ptr = string;
-        while (*string_ptr != '\0')
+        const Byte* string_ptr = (const Byte*) string;
+        while (*string_ptr != 0)
         {
-            AppendSymbolAndReallocate(UnicodeSymbol::Create([&string_ptr]() {
-                return *(string_ptr++);
-            }));
+            UnicodeSymbol& current = ReallocateAndGetFirstEmptySymbolLink();
+            UnicodeSymbol::CreateInplace(current, string_ptr);
+            length++;
+            width += current.DisplayWidth();
         }
         return *this;
     }
 
     UnicodeString& operator+=(const char symbol)
     {
-        AppendSymbolAndReallocate(UnicodeSymbol(symbol));
+        ReallocateAndInsert(UnicodeSymbol(symbol));
         return *this;
     }
 
