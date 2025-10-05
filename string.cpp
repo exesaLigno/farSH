@@ -262,8 +262,21 @@ public:
         return length;
     }
 
-    size_t Width() const
+    size_t Width(size_t terminal_width = 0) const
     {
-        return width;
+        if (terminal_width == 0)
+            return width;
+
+        size_t calculated_width = 0;
+        for (size_t idx = 0; idx < length; idx++)
+        {
+            if (buffer[idx].IsCommand() and buffer[idx].GetCommand() == UnicodeSymbol::Command::LineFeed and terminal_width)
+                calculated_width += (terminal_width - width % terminal_width);
+
+            else
+                calculated_width += buffer[idx].DisplayWidth();
+        }
+
+        return calculated_width;
     }
 };
