@@ -4,26 +4,25 @@
 #include <cstdio>
 
 #include "symbol.cpp"
+#include "string.cpp"
 
-class UnicodeBuffer
+class UnicodeBuffer : public UnicodeString
 {
-public:
-    UnicodeSymbol data[512];
-    size_t bufferCapacity = 512;
-    size_t bufferLength = 0;
+private:
     size_t cursorPosition = 0;
-
+    
+public:
     void MoveCursorForward()
     {
         uint8_t display_shift = 0;
 
-        while (display_shift == 0 and cursorPosition < bufferLength)
+        while (display_shift == 0 and cursorPosition < Length())
         {
-            display_shift = data[cursorPosition].DisplayWidth();
+            display_shift = operator[](cursorPosition).DisplayWidth();
             cursorPosition++;
         }
     }
-
+    
     void MoveCursorBackward()
     {
         uint8_t display_shift = 0;
@@ -31,90 +30,56 @@ public:
         while (display_shift == 0 and cursorPosition > 0)
         {
             cursorPosition--;
-            display_shift = data[cursorPosition].DisplayWidth();
+            display_shift = operator[](cursorPosition).DisplayWidth();
         }
     }
-
+    
     void ClearSymbolBefore()
     {
-        uint8_t removed_display_width = 0;
+        size_t old_cursor_position = cursorPosition;
 
-        while (removed_display_width == 0 and cursorPosition > 0)
-        {
-            removed_display_width = data[cursorPosition - 1].DisplayWidth();
-
-            for (size_t idx = cursorPosition; idx <= bufferLength; idx++)
-                data[idx - 1] = data[idx];
-
-            bufferLength--;
-            cursorPosition--;
-        }
+        while (cursorPosition > 0 and operator[](--cursorPosition).DisplayWidth() == 0);
+        
+        Erase(cursorPosition, old_cursor_position - cursorPosition);
     }
-
-    // void ClearWordBefore()
-    // {
-    // }
-
-    int ClearSymbolAfter()
+    
+    void ClearSymbolAfter()
     {
-        if (cursorPosition < bufferLength)
-        {
-            for (size_t idx = cursorPosition + 1; idx <= bufferLength; idx++)
-                data[idx - 1] = data[idx];
-
-            bufferLength--;
-        }
-
-        return 0;
+        size_t removing_length = 0;
+        
+        while (operator[](cursorPosition + removing_length++).DisplayWidth() == 0 and cursorPosition < Length());
+        
+        Erase(cursorPosition, removing_length);
     }
-
-    void Insert(UnicodeSymbol symbol)
+    
+    void Insert(const UnicodeSymbol& symbol)
     {
-        if (cursorPosition == bufferLength)
-        {
-            bufferLength++;
-            data[cursorPosition++] = symbol;
-        }
-
-        else
-        {
-            bufferLength++;
-
-            for (size_t idx = bufferLength; idx > cursorPosition; idx--)
-                data[idx] = data[idx - 1];
-
-            data[cursorPosition++] = symbol;
-        }
+        cursorPosition += UnicodeString::Insert(cursorPosition, symbol);
     }
-
-    void Insert(const char sym)
+    
+    void Insert(const char symbol)
     {
-        Insert(UnicodeSymbol(sym));
+        cursorPosition += UnicodeString::Insert(cursorPosition, symbol);
     }
-
-    void Insert(const char* str, size_t size = 0)
+    
+    void Insert(const UnicodeString& string)
     {
-        size_t idx = 0;
-        while ((size == 0 or idx < size) and str[idx] != '\0')
-            Insert(UnicodeSymbol::Create([&str, &idx]() {
-                return str[idx++];
-            }));
+        cursorPosition += UnicodeString::Insert(cursorPosition, string);
     }
-
-    void Reset()
+    
+    void Insert(const char* string, size_t size = 0)
     {
-        bufferLength = 0;
+        cursorPosition += UnicodeString::Insert(cursorPosition, string, size);
+    }
+    
+    void Clear()
+    {
+        UnicodeString::Clear();
         cursorPosition = 0;
     }
-
-    void WriteTo(FILE* fileno = stdout) const
+    
+    size_t CursorPosition()
     {
-        for (size_t idx = 0; idx < bufferLength; idx++)
-            data[idx].WriteTo(fileno);
-    }
-
-    UnicodeSymbol operator[](size_t idx) const
-    {
-        return data[idx];
+        return cursorPosition;
     }
 };

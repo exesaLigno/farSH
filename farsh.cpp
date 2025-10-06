@@ -41,10 +41,10 @@ public:
 
     void DrawGreeting()
     {
-        tmp_buffer.Reset();
+        tmp_buffer.Clear();
         greeting.WriteTo(tmp_buffer);
-        for (size_t idx = 0; idx < tmp_buffer.bufferLength; idx++)
-            tty.Write(tmp_buffer[idx], idx == buffer.bufferLength - 1);
+        for (size_t idx = 0; idx < tmp_buffer.Length(); idx++)
+            tty.Write(tmp_buffer[idx], idx == buffer.Length() - 1);
         lfPlacedAlready = tty.LFPlaced();
     }
 
@@ -53,14 +53,14 @@ public:
         tty.ClearLine();
         DrawGreeting();
         bool restore_cursor = false;
-        for (size_t idx = 0; idx < buffer.bufferLength; idx++)
+        for (size_t idx = 0; idx < buffer.Length(); idx++)
         {
-            if (idx == buffer.cursorPosition)
+            if (idx == buffer.CursorPosition())
             {
                 restore_cursor = true;
                 tty.StoreCursorPosition();
             }
-            tty.Write(buffer[idx], idx == buffer.bufferLength - 1);
+            tty.Write(buffer[idx], idx == buffer.Length() - 1);
         }
         if (restore_cursor)
             tty.LoadCursorPosition();
@@ -89,10 +89,11 @@ public:
                         Redraw(false);
                         if (not lfPlacedAlready)
                             printf("\n");
-                        buffer.Reset();
-                        tty.Reset();
 
                         ExecuteCommand();
+                        
+                        buffer.Clear();
+                        tty.Reset();
 
                         Redraw();
                         break;
@@ -139,6 +140,9 @@ public:
 
     int ExecuteCommand()
     {
+        printf("Executing command: '");
+        buffer.WriteTo();
+        printf("'...\n");
         return 0;
     }
 };
