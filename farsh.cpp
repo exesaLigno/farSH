@@ -18,7 +18,7 @@ private:
     char cwd[2048] = { 0 };
     int inputStartRow = 0;
     int inputStartColumn = 0;
-    UnicodeBuffer buffer;
+    UnicodeBuffer inputBuffer;
 
     UnicodeBuffer tmp_buffer;
 
@@ -27,45 +27,27 @@ private:
     bool rudeMode = false;
 
 public:
-    void SetCursorPosition(const unsigned int row, const unsigned int column) const
-    {
-        printf("\e[%u;%uH", row, column);
-    }
-
-    void PrintAt(const unsigned int row, const unsigned int column, const char* text) const
-    {
-        printf("\e7\e[%u;%uH", row, column);
-        printf(text);
-        printf("\e8");
-    }
-
-    void DrawGreeting()
-    {
-        tmp_buffer.Clear();
-        greeting.WriteTo(tmp_buffer);
-        for (size_t idx = 0; idx < tmp_buffer.Length(); idx++)
-            tty.Write(tmp_buffer[idx], idx == buffer.Length() - 1);
-        lfPlacedAlready = tty.LFPlaced();
-    }
-
     void Redraw(bool interactive = true)
     {
-        tty.ClearLine();
-        DrawGreeting();
-        bool restore_cursor = false;
-        for (size_t idx = 0; idx < buffer.Length(); idx++)
-        {
-            if (idx == buffer.CursorPosition())
+        tty.Clear();
+        UnicodeBuffer& outputBuffer = tty.OutputBuffer();
+        outputBuffer.Clear();
+        greeting.WriteTo(outputBuffer);
+        bool cursor_set = false;
+        for (size_t idx = 0; idx < inputBuffer.Length(); idx++)
+        {            
+            if (idx == inputBuffer.CursorPosition())
             {
-                restore_cursor = true;
-                tty.StoreCursorPosition();
+                outputBuffer.SetCursor();
+                cursor_set = true;
             }
-            tty.Write(buffer[idx], idx == buffer.Length() - 1);
+            
+            outputBuffer.Append(inputBuffer[idx]);
         }
-        if (restore_cursor)
-            tty.LoadCursorPosition();
-
-        lfPlacedAlready = tty.LFPlaced();
+        if (not cursor_set)
+            outputBuffer.SetCursor();
+        
+        tty.Render();
     }
 
     void Run()
@@ -77,7 +59,7 @@ public:
 
             if (not symbol.IsCommand())
             {
-                buffer.Insert(symbol);
+                inputBuffer.Insert(symbol);
                 Redraw();
             }
 
@@ -92,24 +74,24 @@ public:
 
                         ExecuteCommand();
                         
-                        buffer.Clear();
-                        tty.Reset();
+                        inputBuffer.Clear();
+                        tty.Clear();
 
                         Redraw();
                         break;
 
                     case UnicodeSymbol::Command::Delete:
-                        buffer.ClearSymbolBefore();
+                        inputBuffer.ClearSymbolBefore();
                         Redraw();
                         break;
 
                     case UnicodeSymbol::Command::DeleteAfter:
-                        buffer.ClearSymbolAfter();
+                        inputBuffer.ClearSymbolAfter();
                         Redraw();
                         break;
 
                     case UnicodeSymbol::Command::EndOfTransmission:
-                        buffer.Insert(" \e[3;33m...dying in agony...\e[0m");
+                        inputBuffer.Insert(" \e[3;33m...dying in agony...\e[0m");
                         Redraw();
                         if (not lfPlacedAlready)
                             printf("\n");
@@ -121,12 +103,12 @@ public:
                         break;
 
                     case UnicodeSymbol::Command::CursorForward:
-                        buffer.MoveCursorForward();
+                        inputBuffer.MoveCursorForward();
                         Redraw();
                         break;
 
                     case UnicodeSymbol::Command::CursorBack:
-                        buffer.MoveCursorBackward();
+                        inputBuffer.MoveCursorBackward();
                         Redraw();
                         break;
 
@@ -141,7 +123,7 @@ public:
     int ExecuteCommand()
     {
         printf("Executing command: '");
-        buffer.WriteTo();
+        inputBuffer.WriteTo();
         printf("'...\n");
         return 0;
     }

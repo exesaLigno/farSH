@@ -72,6 +72,11 @@ public:
         cursorPosition += UnicodeString::Insert(cursorPosition, string, size);
     }
     
+    void SetCursor()
+    {
+        cursorPosition = Length();
+    }
+    
     void Clear()
     {
         UnicodeString::Clear();
