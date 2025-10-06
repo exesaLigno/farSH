@@ -156,8 +156,9 @@ public:
      * `Length() + where`.
      * @param string Unicode string to be inserted into current string on 
      * specified position.
+     * @return Count of symbols inserted.
      */
-    void Insert(int64_t where, const UnicodeString& string)
+    size_t Insert(int64_t where, const UnicodeString& string)
     {
         int64_t absolute_index = GetAbsoluteIndex(where);
 
@@ -172,6 +173,8 @@ public:
 
         length += string.length;
         width += string.width;
+        
+        return string.length;
     }
     
     /**
@@ -186,8 +189,9 @@ public:
      * @param string Srting to be inserted.
      * @param size Size of source string. If it equals `0`, or greater then 
      * `strlen(string)`, entire string will be copied.
+     * @return Count of symbols inserted.
      */
-    void Insert(int64_t where, const char* string, size_t size = 0)
+    size_t Insert(int64_t where, const char* string, size_t size = 0)
     {
         size_t string_len = size ? strnlen(string, size) : strlen(string);
         int64_t absolute_index = GetAbsoluteIndex(where);
@@ -209,10 +213,12 @@ public:
         }
         
         if (string_len - inserted_len == 0 or moved_size == 0)
-            return;
+            return inserted_len;
 
         for (size_t idx = 0; idx < moved_size; idx++)
             buffer[absolute_index + inserted_len + idx] = std::move(buffer[absolute_index + string_len + idx]);
+            
+        return inserted_len;
     }
 
     /**
@@ -224,8 +230,9 @@ public:
      * insertion. If `where` is less then `0`, insertion will start in position
      * `Length() + where`.
      * @param symbol A unicode symbol to insert into string
+     * @return Count of symbols inserted.
      */
-    void Insert(int64_t where, const UnicodeSymbol& symbol)
+    size_t Insert(int64_t where, const UnicodeSymbol& symbol)
     {
         int64_t absolute_index = GetAbsoluteIndex(where);
 
@@ -238,6 +245,8 @@ public:
         buffer[absolute_index] = symbol;
         width += buffer[absolute_index].DisplayWidth();
         length++;
+        
+        return 1;
     }
     
     /**
@@ -249,10 +258,11 @@ public:
      * insertion. If `where` is less then `0`, insertion will start in position
      * `Length() + where`.
      * @param symbol A symbol to insert into string
+     * @return Count of symbols inserted.
      */
-    void Insert(int64_t where, const char symbol)
+    size_t Insert(int64_t where, const char symbol)
     {
-        Insert(where, UnicodeSymbol(symbol));
+        return Insert(where, UnicodeSymbol(symbol));
     }
     
     /** 
@@ -260,10 +270,11 @@ public:
      * remaining capacity is less then provided string, current string will
      * be reallocated.
      * @param string Unicode string to be appended to the end of current string.
+     * @return Count of symbols inserted.
      */
-    void Append(const UnicodeString& string)
+    size_t Append(const UnicodeString& string)
     {
-        Insert(Length(), string);
+        return Insert(Length(), string);
     }
     
     /**
@@ -273,30 +284,33 @@ public:
      * @param string Srting to be inserted.
      * @param size Size of source string. If it equals `0`, or greater then 
      * `strlen(string)`, entire string will be copied.
+     * @return Count of symbols inserted.
      */
-    void Append(const char* string, size_t size = 0)
+    size_t Append(const char* string, size_t size = 0)
     {
-        Insert(Length(), string, size);
+        return Insert(Length(), string, size);
     }
     
     /** 
      * @brief Appends provided unicode symbol to the end of current string. If 
      * remaining capacity is zero, current string will be reallocated.
      * @param symbol Symbol to be appended to the end of current string.
+     * @return Count of symbols inserted.
      */
-    void Append(const UnicodeSymbol& symbol)
+    size_t Append(const UnicodeSymbol& symbol)
     {
-        Insert(Length(), symbol);
+        return Insert(Length(), symbol);
     }
     
     /** 
      * @brief Appends provided symbol to the end of current string. If 
      * remaining capacity is zero, current string will be reallocated.
      * @param symbol Symbol to be appended to the end of current string.
+     * @return Count of symbols inserted.
      */
-    void Append(const char symbol)
+    size_t Append(const char symbol)
     {
-        Insert(Length(), symbol);
+        return Insert(Length(), symbol);
     }
     
     /**
@@ -304,10 +318,11 @@ public:
      * string. It reallocates current string internal buffer if it is necessary
      * and moves all contents forward by the length of prepending string.
      * @param string A unicode string to prepend.
+     * @return Count of symbols inserted.
      */
-    void Prepend(const UnicodeString& string)
+    size_t Prepend(const UnicodeString& string)
     {
-        Insert(0, string);
+        return Insert(0, string);
     }
     
     /**
@@ -317,30 +332,33 @@ public:
      * @param string A string to prepend.
      * @param size Size of source string. If it equals `0`, or greater then 
      * `strlen(string)`, entire string will be copied.
+     * @return Count of symbols inserted.
      */
-    void Prepend(const char* string, size_t size = 0)
+    size_t Prepend(const char* string, size_t size = 0)
     {
-        Insert(0, string, size);
+        return Insert(0, string, size);
     }
 
     /**
      * @brief Prepends symbol at the beggining of current string. Moves all 
      * symbols one symbol forward and reallocates buffer if it is needed.
      * @param symbol Unicode symbol to prepend.
+     * @return Count of symbols inserted.
      */
-    void Prepend(const UnicodeSymbol& symbol)
+    size_t Prepend(const UnicodeSymbol& symbol)
     {
-        Insert(0, symbol);
+        return Insert(0, symbol);
     }
     
     /**
      * @brief Prepends symbol at the beggining of current string. Moves all 
      * symbols one symbol forward and reallocates buffer if it is needed.
      * @param symbol Symbol to prepend.
+     * @return Count of symbols inserted.
      */
-    void Prepend(const char symbol)
+    size_t Prepend(const char symbol)
     {
-        Insert(0, symbol);
+        return Insert(0, symbol);
     }
     
     /**
