@@ -392,9 +392,9 @@ private:
 
 public:
     UnicodeSymbol() { }
-    UnicodeSymbol(Type _type) : type(_type) { }
-    UnicodeSymbol(const Byte* _bytes, const size_t _bytes_length) { Initialize(_bytes, _bytes_length); }
-    UnicodeSymbol(const Byte _byte) { Initialize(&_byte, 1); }
+    explicit UnicodeSymbol(Type _type) : type(_type) { }
+    explicit UnicodeSymbol(const Byte* _bytes, const size_t _bytes_length) { Initialize(_bytes, _bytes_length); }
+    explicit UnicodeSymbol(const Byte _byte) { Initialize(&_byte, 1); }
 
     ~UnicodeSymbol()
     {
@@ -630,22 +630,7 @@ public:
         return display_width;
     }
 
-    static UnicodeSymbol Create(std::function<Byte()> get_next_byte)
-    {
-        Byte buffer[100] = { 0 };
-        size_t buffer_idx = 0;
-        State current_state = State::Start;
-
-        while (current_state != State::End and current_state != State::Error)
-        {
-            buffer[buffer_idx] = get_next_byte();
-            ReaderFSMStep(current_state, buffer[buffer_idx++]);
-        }
-
-        return UnicodeSymbol(buffer, buffer_idx);
-    }
-
-    static void CreateInplace(UnicodeSymbol& destination, std::function<Byte()> get_next_byte)
+    static size_t Create(UnicodeSymbol& destination, std::function<Byte()> get_next_byte)
     {
         Byte buffer[100] = { 0 };
         size_t buffer_idx = 0;
@@ -658,22 +643,11 @@ public:
         }
 
         destination.Initialize(buffer, buffer_idx);
+        
+        return buffer_idx;
     }
 
-    static UnicodeSymbol Create(const Byte*& string_ptr)
-    {
-        size_t length = 0;
-        State current_state = State::Start;
-
-        while (current_state != State::End and current_state != State::Error)
-            ReaderFSMStep(current_state, string_ptr[length++]);
-
-        UnicodeSymbol res = UnicodeSymbol(string_ptr, length);
-        string_ptr += length;
-        return res;
-    }
-
-    static void CreateInplace(UnicodeSymbol& destination, const Byte*& string_ptr)
+    static size_t Create(UnicodeSymbol& destination, const Byte* string_ptr)
     {
         size_t length = 0;
         State current_state = State::Start;
@@ -682,7 +656,8 @@ public:
             ReaderFSMStep(current_state, string_ptr[length++]);
 
         destination.Initialize(string_ptr, length);
-        string_ptr += length;
+        
+        return length;
     }
 
     const size_t BytesLength() const
