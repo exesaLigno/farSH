@@ -78,6 +78,19 @@ private:
         
         return absolute_index;
     }
+    
+    UnicodeString(const UnicodeString& other)
+    {
+        bufferSize = other.bufferSize;
+        length = other.length;
+        width = other.width;
+        
+        if (other.buffer and bufferSize > 0)
+        {
+            buffer = new UnicodeSymbol[bufferSize];
+            memcpy(buffer, other.buffer, bufferSize * sizeof(UnicodeSymbol));
+        }
+    }
 
 public:
     UnicodeString()
@@ -103,6 +116,19 @@ public:
             length++;
         }
     }
+    
+    UnicodeString(UnicodeString&& other)
+    {
+        bufferSize = other.bufferSize;
+        length = other.length;
+        width = other.width;
+        buffer = other.buffer;
+        
+        other.bufferSize = 0;
+        other.length = 0;
+        other.width = 0;
+        other.buffer = nullptr;
+    }
 
     ~UnicodeString()
     {
@@ -117,76 +143,6 @@ public:
     {
         length = 0;
         width = 0;
-    }
-
-    /** 
-     * @brief Appends provided unicode string to the end of current string. If 
-     * remaining capacity is less then provided string, current string will
-     * be reallocated.
-     * @param string Unicode string to be appended to the end of current string.
-     */
-    void Append(const UnicodeString& string)
-    {
-        if (length + string.length > bufferSize)
-            ReallocateBuffer(string.length, ReallocationMethod::AppendSize);
-
-        for (size_t idx = 0; idx < string.length; idx++, length++)
-            buffer[length] = string.buffer[idx];
-
-        width += string.width;
-    }
-    
-    /**
-     * @brief Appends provided string to the end of current string. If 
-     * remaining capacity is less then provided string, current string will
-     * be reallocated.
-     * @param string Srting to be inserted.
-     * @param size Size of source string. If it equals `0`, or greater then 
-     * `strlen(string)`, entire string will be copied.
-     */
-    void Append(const char* string, size_t size = 0)
-    {
-        size_t string_len = size ? strnlen(string, size) : strlen(string);
-        
-        if (length + string_len > bufferSize)
-            ReallocateBuffer(string_len, ReallocationMethod::AppendSize);
-
-        for (size_t idx; idx < string_len;)
-        {
-            UnicodeSymbol::Create(buffer[length], (const Byte*) (string + idx));
-            width += buffer[length].DisplayWidth();
-            length++;
-        }
-    }
-    
-    /** 
-     * @brief Appends provided unicode symbol to the end of current string. If 
-     * remaining capacity is zero, current string will be reallocated.
-     * @param symbol Symbol to be appended to the end of current string.
-     */
-    void Append(const UnicodeSymbol& symbol)
-    {
-        if (length + 1 > bufferSize)
-            ReallocateBuffer(2, ReallocationMethod::MultiplySize);
-
-        buffer[length] = symbol;
-        width += buffer[length].DisplayWidth();
-        length++;
-    }
-    
-    /** 
-     * @brief Appends provided symbol to the end of current string. If 
-     * remaining capacity is zero, current string will be reallocated.
-     * @param symbol Symbol to be appended to the end of current string.
-     */
-    void Append(const char symbol)
-    {
-        if (length + 1 > bufferSize)
-            ReallocateBuffer(2, ReallocationMethod::MultiplySize);
-
-        buffer[length] = UnicodeSymbol(symbol);
-        width += buffer[length].DisplayWidth();
-        length++;
     }
 
     /** 
@@ -252,7 +208,7 @@ public:
             length++;
         }
         
-        if (string_len - inserted_len == 0)
+        if (string_len - inserted_len == 0 or moved_size == 0)
             return;
 
         for (size_t idx = 0; idx < moved_size; idx++)
@@ -280,9 +236,8 @@ public:
             buffer[idx + 1] = std::move(buffer[idx]);
 
         buffer[absolute_index] = symbol;
-
-        length++;
         width += buffer[absolute_index].DisplayWidth();
+        length++;
     }
     
     /**
@@ -297,18 +252,51 @@ public:
      */
     void Insert(int64_t where, const char symbol)
     {
-        int64_t absolute_index = GetAbsoluteIndex(where);
-        
-        if (length + 1 > bufferSize)
-            ReallocateBuffer(2, ReallocationMethod::MultiplySize);
-
-        for (int64_t idx = length - 1; idx >= absolute_index; idx--)
-            buffer[idx + 1] = std::move(buffer[idx]);
-
-        buffer[absolute_index] = UnicodeSymbol(symbol);
-
-        length++;
-        width += buffer[absolute_index].DisplayWidth();
+        Insert(where, UnicodeSymbol(symbol));
+    }
+    
+    /** 
+     * @brief Appends provided unicode string to the end of current string. If 
+     * remaining capacity is less then provided string, current string will
+     * be reallocated.
+     * @param string Unicode string to be appended to the end of current string.
+     */
+    void Append(const UnicodeString& string)
+    {
+        Insert(Length(), string);
+    }
+    
+    /**
+     * @brief Appends provided string to the end of current string. If 
+     * remaining capacity is less then provided string, current string will
+     * be reallocated.
+     * @param string Srting to be inserted.
+     * @param size Size of source string. If it equals `0`, or greater then 
+     * `strlen(string)`, entire string will be copied.
+     */
+    void Append(const char* string, size_t size = 0)
+    {
+        Insert(Length(), string, size);
+    }
+    
+    /** 
+     * @brief Appends provided unicode symbol to the end of current string. If 
+     * remaining capacity is zero, current string will be reallocated.
+     * @param symbol Symbol to be appended to the end of current string.
+     */
+    void Append(const UnicodeSymbol& symbol)
+    {
+        Insert(Length(), symbol);
+    }
+    
+    /** 
+     * @brief Appends provided symbol to the end of current string. If 
+     * remaining capacity is zero, current string will be reallocated.
+     * @param symbol Symbol to be appended to the end of current string.
+     */
+    void Append(const char symbol)
+    {
+        Insert(Length(), symbol);
     }
     
     /**
@@ -353,6 +341,32 @@ public:
     void Prepend(const char symbol)
     {
         Insert(0, symbol);
+    }
+    
+    /**
+     * @brief Erases `size` symbols in string, starting from position `where`.
+     * After erase moves tails to position `where`.
+     * @param where First erasing element.
+     * @param size Count of symbols to erase. String will be erased till the end
+     * if `size` is greater or equal then count of symbols after position 
+     * `where`
+     */
+    void Erase(const size_t where, const size_t size = 1)
+    {
+        size_t old_length = length;
+        
+        for (size_t idx = where; idx < where + size and idx < old_length; idx++, length--)
+            width -= buffer[idx].DisplayWidth();
+            
+        for (size_t idx = where + size; idx < old_length; idx++)
+            buffer[idx - size] = std::move(buffer[idx]);
+    }
+    
+    UnicodeString operator+(const UnicodeString& other)
+    {
+        UnicodeString result(*this);
+        result.Append(other);
+        return result;
     }
 
     UnicodeSymbol& operator[](size_t idx)
