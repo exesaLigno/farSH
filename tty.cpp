@@ -51,8 +51,8 @@ private:
     
     static void SigwinchHandler(int signo)
     {
-        // if (instance)
-        //     instance -> Rerender();
+        if (instance)
+            instance -> Rerender();
     }
 
 public:
@@ -67,7 +67,11 @@ public:
         FetchSize();
         
         instance = this;
-        std::signal(SIGWINCH, SigwinchHandler);
+        struct sigaction sa;
+        sa.sa_handler = SigwinchHandler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sigaction(SIGWINCH, &sa, NULL);
     }
 
     ~TTY()
