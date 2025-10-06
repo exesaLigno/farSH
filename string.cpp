@@ -56,21 +56,8 @@ private:
             delete[] old_buffer;
         }
     }
-
-    inline UnicodeSymbol& GetFirstEmptySymbolLink()
-    {
-        return buffer[length];
-    }
-
-    inline UnicodeSymbol& ReallocateAndGetFirstEmptySymbolLink()
-    {
-        if (length >= bufferSize)
-            ReallocateBuffer(2, ReallocationMethod::MultiplySize);
-
-        return GetFirstEmptySymbolLink();
-    }
     
-    int64_t GetAbsoluteIndex(int64_t relative_index)
+    int64_t GetAbsoluteIndex(int64_t relative_index) const
     {
         int64_t absolute_index = (relative_index >= 0) ? relative_index : length + relative_index;
         assert(absolute_index >= 0);
@@ -195,15 +182,15 @@ public:
     {
         size_t string_len = size ? strnlen(string, size) : strlen(string);
         int64_t absolute_index = GetAbsoluteIndex(where);
-                
+
         if (length + string_len > bufferSize)
             ReallocateBuffer(string_len, ReallocationMethod::AppendSize);
-        
+
         for (int64_t idx = length - 1; idx >= absolute_index; idx--)
             buffer[idx + string_len] = std::move(buffer[idx]);
-            
+
         size_t moved_size = length - absolute_index;
-        
+
         size_t inserted_len = 0;
         for (size_t string_idx = 0; string_idx < string_len; inserted_len++)
         {
@@ -211,13 +198,13 @@ public:
             width += buffer[inserted_len + absolute_index].DisplayWidth();
             length++;
         }
-        
+
         if (string_len - inserted_len == 0 or moved_size == 0)
             return inserted_len;
 
         for (size_t idx = 0; idx < moved_size; idx++)
             buffer[absolute_index + inserted_len + idx] = std::move(buffer[absolute_index + string_len + idx]);
-            
+
         return inserted_len;
     }
 
@@ -380,14 +367,14 @@ public:
             buffer[idx - size] = std::move(buffer[idx]);
     }
     
-    UnicodeString operator+(const UnicodeString& other)
+    UnicodeString operator+(const UnicodeString& other) const
     {
         UnicodeString result(*this);
         result.Append(other);
         return result;
     }
 
-    UnicodeSymbol& operator[](size_t idx)
+    UnicodeSymbol& operator[](size_t idx) const
     {
         return buffer[idx];
     }

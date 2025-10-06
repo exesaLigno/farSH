@@ -78,8 +78,36 @@ public:
         cursorPosition = 0;
     }
     
-    size_t CursorPosition()
+    size_t CursorPosition() const
     {
         return cursorPosition;
+    }
+    
+    size_t WidthUntilPosition(size_t position, size_t terminal_width = 0) const
+    {
+        size_t calculated_width = 0;
+        for (size_t idx = 0; idx < position; idx++)
+        {
+            if (operator[](idx).IsCommand() and operator[](idx).GetCommand() == UnicodeSymbol::Command::LineFeed and terminal_width)
+                calculated_width += (terminal_width - calculated_width % terminal_width);
+
+            else
+                calculated_width += operator[](idx).DisplayWidth();
+        }
+
+        return calculated_width;
+    }
+    
+    size_t Width(size_t terminal_width = 0) const
+    {
+        if (terminal_width == 0)
+            return UnicodeString::Width();
+            
+        return WidthUntilPosition(Length(), terminal_width);
+    }
+    
+    size_t WidthUntilCursor(size_t terminal_width = 0) const
+    {
+        return WidthUntilPosition(CursorPosition(), terminal_width);
     }
 };
