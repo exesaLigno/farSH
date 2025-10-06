@@ -71,15 +71,22 @@ public:
     UnicodeSymbol Fetch()
     {
         FILE* current_stream = in;
+        UnicodeSymbol res;
 
-        return UnicodeSymbol::Create([current_stream]() {
-            while (true)
+        UnicodeSymbol::Create(
+            res,
+            [current_stream]()
             {
-                int byte = getc(current_stream);
-                if (byte >= 0)
-                    return (Byte) byte;
+                while (true)
+                {
+                    int byte = getc(current_stream);
+                    if (byte >= 0)
+                        return (Byte) byte;
+                }
             }
-        });
+        );
+        
+        return res;
     }
 
     void MoveCursor(int32_t rows_shift, int32_t columns_shift)
