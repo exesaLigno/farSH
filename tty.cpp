@@ -143,25 +143,22 @@ public:
         fputs("\e[J", out);
     }
     
-    void Render()
+    void Render(bool no_cursor = false)
     {
         FetchSize();
         
         size_t line_end = outputBuffer.Width(terminalCols);
         size_t cursor_position = outputBuffer.WidthUntilCursor(terminalCols);
         
-        for (size_t idx = 0; idx < outputBuffer.Length(); idx++)
+        outputBuffer.WriteTo(out);
+        if (line_end % terminalCols == 0 or no_cursor)
         {
-            lf_placed = false;
-            
-            outputBuffer[idx].WriteTo(out);
-            
-            if (line_end % terminalCols == 0 and idx == outputBuffer.Length() - 1)
-            {
-                lf_placed = true;
-                fputc('\n', out);
-            }
+            lf_placed = true;
+            fputc('\n', out);
         }
+        
+        if (no_cursor)
+            return;
         
         int32_t cursor_position_shift = line_end - cursor_position;
 
@@ -181,95 +178,6 @@ public:
         Clear();
         Render();
     }
-
-    // void StoreCursorPosition()
-    // {
-    //     cursor_positions_storage.Push(cursor_position);
-    // }
-
-    // void LoadCursorPosition()
-    // {
-    //     size_t loaded_position = cursor_positions_storage.Pop();
-
-    //     int32_t cursor_position_shift = cursor_position - loaded_position;
-
-    //     int32_t rows_shift = 0;
-    //     int32_t columns_shift = cursor_position_shift <= cursor_position % terminalCols ? cursor_position_shift : cursor_position % terminalCols;
-    //     cursor_position_shift -= columns_shift;
-
-    //     rows_shift += cursor_position_shift / terminalCols + (cursor_position_shift % terminalCols != 0);
-    //     if (cursor_position_shift % terminalCols != 0)
-    //         columns_shift -= terminalCols - cursor_position_shift % terminalCols;
-
-    //     MoveCursor(rows_shift, columns_shift);
-
-    //     cursor_position = loaded_position;
-    // }
-
-    // void ClearLine()
-    // {
-    //     bool size_was_changed = FetchSize();
-
-    //     int32_t rows_shift = cursor_position / terminalCols;
-    //     int32_t columns_shift = cursor_position % terminalCols;
-
-    //     if (size_was_changed and cursor_position % terminalCols == 0 and not lf_placed and cursor_position == maximum_cursor_position)
-    //     {
-    //         rows_shift -= 1;
-    //         columns_shift = terminalCols - 1;
-    //     }
-
-    //     else if (size_was_changed and lf_placed and cursor_position == maximum_cursor_position)
-    //     {
-    //         rows_shift += 1;
-    //         columns_shift = 0;
-    //     }
-
-    //     MoveCursor(rows_shift, columns_shift);
-
-    //     cursor_position = 0;
-    //     maximum_cursor_position = 0;
-
-    //     fputs("\e[J", out);
-    // }
-
-    // void Write(const UnicodeSymbol& symbol, bool last_symbol = false)
-    // {
-    //     FetchSize();
-
-    //     auto width = symbol.DisplayWidth();
-        
-    //     if ((cursor_position % terminalCols) + width > terminalCols)
-    //     {
-    //         cursor_position += terminalCols - cursor_position % terminalCols;
-    //         maximum_cursor_position += terminalCols - cursor_position % terminalCols;
-    //         fprintf(out, "\n");
-    //     }
-
-    //     cursor_position += width;
-    //     maximum_cursor_position += width;
-    //     symbol.WriteTo(out);
-    //     lf_placed = false;
-
-    //     if (cursor_position % terminalCols == 0 and width != 0 and last_symbol)
-    //     {
-    //         lf_placed = true;
-    //         fputc('\n', out);
-    //     }
-    // }
-
-    // void Reset()
-    // {
-    //     cursor_position = 0;
-    //     maximum_cursor_position = 0;
-    //     cursor_positions_storage.Clear();
-    //     lf_placed = false;
-    // }
-
-    // bool LFPlaced()
-    // {
-    //     return lf_placed;
-    // }
 };
 
 TTY* TTY::instance = nullptr;

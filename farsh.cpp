@@ -22,8 +22,6 @@ private:
 
     UnicodeBuffer tmp_buffer;
 
-    bool lfPlacedAlready = false;
-
     bool rudeMode = false;
 
 public:
@@ -47,7 +45,7 @@ public:
         if (not cursor_set)
             outputBuffer.SetCursor();
         
-        tty.Render();
+        tty.Render(not interactive);
     }
 
     void Run()
@@ -58,10 +56,7 @@ public:
             UnicodeSymbol symbol = tty.Fetch();
 
             if (not symbol.IsCommand())
-            {
                 inputBuffer.Insert(symbol);
-                Redraw();
-            }
 
             else
             {
@@ -69,32 +64,24 @@ public:
                 {
                     case UnicodeSymbol::Command::LineFeed:
                         Redraw(false);
-                        if (not lfPlacedAlready)
-                            printf("\n");
 
                         ExecuteCommand();
                         
                         inputBuffer.Clear();
                         tty.Clear();
 
-                        Redraw();
                         break;
 
                     case UnicodeSymbol::Command::Delete:
                         inputBuffer.ClearSymbolBefore();
-                        Redraw();
                         break;
 
                     case UnicodeSymbol::Command::DeleteAfter:
                         inputBuffer.ClearSymbolAfter();
-                        Redraw();
                         break;
 
                     case UnicodeSymbol::Command::EndOfTransmission:
-                        inputBuffer.Insert(" \e[3;33m...dying in agony...\e[0m");
-                        Redraw();
-                        if (not lfPlacedAlready)
-                            printf("\n");
+                        printf(" \e[3;33m...dying in agony...\e[0m\n");
                         return;
 
                     case UnicodeSymbol::Command::CursorUp:
@@ -104,24 +91,35 @@ public:
 
                     case UnicodeSymbol::Command::CursorForward:
                         inputBuffer.MoveCursorForward();
-                        Redraw();
                         break;
 
                     case UnicodeSymbol::Command::CursorBack:
                         inputBuffer.MoveCursorBackward();
-                        Redraw();
+                        break;
+                    
+                    case UnicodeSymbol::Command::CursorPosition:
+                        inputBuffer.MoveCursorToStart();
+                        break;
+                        
+                    case UnicodeSymbol::Command::CursorPreviousLine:
+                        inputBuffer.MoveCursorToEnd();
                         break;
                         
                     case UnicodeSymbol::Command::EndOfText:
                         inputBuffer.Clear();
-                        Redraw();
+                        break;
+                        
+                    case UnicodeSymbol::Command::DeviceControlThree:
+                        inputBuffer.Prepend("sudo ");
                         break;
 
                     default:
-                        symbol.DebugWriteTo(stdout);
+                        symbol.DebugWriteTo(stderr);
                         break;
                 }
             }
+            
+            Redraw();
         }
     }
 

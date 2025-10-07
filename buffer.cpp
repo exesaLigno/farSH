@@ -6,7 +6,7 @@
 #include "symbol.cpp"
 #include "string.cpp"
 
-class UnicodeBuffer : public UnicodeString
+class UnicodeBuffer : UnicodeString
 {
 private:
     size_t cursorPosition = 0;
@@ -34,6 +34,16 @@ public:
         }
     }
     
+    void MoveCursorToStart()
+    {
+        cursorPosition = 0;
+    }
+
+    void MoveCursorToEnd()
+    {
+        cursorPosition = Length();
+    }
+
     void ClearSymbolBefore()
     {
         size_t old_cursor_position = cursorPosition;
@@ -123,4 +133,10 @@ public:
     {
         return WidthUntilPosition(CursorPosition(), terminal_width);
     }
+    
+    using UnicodeString::Length;
+    using UnicodeString::Append;
+    using UnicodeString::operator[];
+    using UnicodeString::WriteTo;
+    using UnicodeString::Prepend;
 };
