@@ -111,6 +111,11 @@ public:
                         inputBuffer.MoveCursorBackward();
                         Redraw();
                         break;
+                        
+                    case UnicodeSymbol::Command::EndOfText:
+                        inputBuffer.Clear();
+                        Redraw();
+                        break;
 
                     default:
                         symbol.DebugWriteTo(stdout);
