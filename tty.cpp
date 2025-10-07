@@ -26,6 +26,8 @@ private:
     FILE* out = stdout;
     
     UnicodeBuffer outputBuffer;
+    
+    bool lf_placed = false;
 
     bool FetchSize()
     {
@@ -51,8 +53,10 @@ private:
     
     static void SigwinchHandler(int signo)
     {
-        if (instance)
+        if (signo == SIGWINCH and instance)
             instance -> Rerender();
+        else if (signo == SIGINT and instance)
+            ungetc('\x03', instance->in);
     }
 
 public:
@@ -72,6 +76,7 @@ public:
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
         sigaction(SIGWINCH, &sa, NULL);
+        sigaction(SIGINT, &sa, NULL);
     }
 
     ~TTY()
@@ -122,17 +127,17 @@ public:
         int32_t rows_shift = cursor_position / terminalCols;
         int32_t columns_shift = cursor_position % terminalCols;
         
-        // if (size_changed and cursor_position % terminalCols == 0 and not lf_placed and cursor_position == maximum_cursor_position)
-        // {
-        //     rows_shift -= 1;
-        //     columns_shift = terminalCols - 1;
-        // }
+        if (size_changed and cursor_position % terminalCols == 0 and not lf_placed and outputBuffer.CursorAtTheEnd())
+        {
+            rows_shift -= 1;
+            columns_shift = terminalCols - 1;
+        }
 
-        // else if (size_was_changed and lf_placed and cursor_position == maximum_cursor_position)
-        // {
-        //     rows_shift += 1;
-        //     columns_shift = 0;
-        // }
+        else if (size_changed and lf_placed and outputBuffer.CursorAtTheEnd())
+        {
+            rows_shift += 1;
+            columns_shift = 0;
+        }
 
         MoveCursor(rows_shift, columns_shift);
         fputs("\e[J", out);
@@ -147,10 +152,15 @@ public:
         
         for (size_t idx = 0; idx < outputBuffer.Length(); idx++)
         {
+            lf_placed = false;
+            
             outputBuffer[idx].WriteTo(out);
             
-            if (line_end == cursor_position and line_end % terminalCols == 0 and idx == outputBuffer.Length() - 1)
+            if (line_end % terminalCols == 0 and idx == outputBuffer.Length() - 1)
+            {
+                lf_placed = true;
                 fputc('\n', out);
+            }
         }
         
         int32_t cursor_position_shift = line_end - cursor_position;
