@@ -135,8 +135,10 @@ public:
     }
     
     using UnicodeString::Length;
-    using UnicodeString::Append;
     using UnicodeString::operator[];
     using UnicodeString::WriteTo;
+    
+    /// TODO: Rewrite to preserve cursorPosition on appending and prepending something
+    using UnicodeString::Append;
     using UnicodeString::Prepend;
 };

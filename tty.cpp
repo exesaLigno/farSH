@@ -51,10 +51,10 @@ private:
         return (value ^ mask) - mask;
     }
     
-    static void SigwinchHandler(int signo)
+    static void SignalHandler(int signo)
     {
         if (signo == SIGWINCH and instance)
-            instance -> Rerender();
+            instance->Rerender();
         else if (signo == SIGINT and instance)
             ungetc('\x03', instance->in);
     }
@@ -72,7 +72,7 @@ public:
         
         instance = this;
         struct sigaction sa;
-        sa.sa_handler = SigwinchHandler;
+        sa.sa_handler = SignalHandler;
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
         sigaction(SIGWINCH, &sa, NULL);
