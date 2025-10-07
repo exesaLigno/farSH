@@ -77,6 +77,11 @@ public:
         cursorPosition = Length();
     }
     
+    bool CursorAtTheEnd() const
+    {
+        return cursorPosition == Length();
+    }
+    
     void Clear()
     {
         UnicodeString::Clear();
@@ -93,8 +98,11 @@ public:
         size_t calculated_width = 0;
         for (size_t idx = 0; idx < position; idx++)
         {
-            if (operator[](idx).IsCommand() and operator[](idx).GetCommand() == UnicodeSymbol::Command::LineFeed and terminal_width)
+            if (terminal_width and operator[](idx).IsCommand() and operator[](idx).GetCommand() == UnicodeSymbol::Command::LineFeed)
                 calculated_width += (terminal_width - calculated_width % terminal_width);
+                
+            else if (terminal_width and operator[](idx).DisplayWidth() > terminal_width - calculated_width % terminal_width)
+                calculated_width += terminal_width - calculated_width % terminal_width + operator[](idx).DisplayWidth();
 
             else
                 calculated_width += operator[](idx).DisplayWidth();
