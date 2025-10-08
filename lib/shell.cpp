@@ -1,6 +1,7 @@
 #include "shell.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -8,13 +9,26 @@
 #include <cstring>
 #include <csignal>
 
+uint64_t Shell::RollInfinitySidedDice()
+{
+    uint64_t result = (uint64_t) time(nullptr);
+    result = (result ^ (result << 3)) | ~(result ^ (result >> 5));
+    result = (rand() | ((uint64_t) rand()) << 32) ^ (result + 42);
+
+    return result;
+}
+
 void Shell::Redraw(bool interactive)
 {
     tty.Clear();
     UnicodeBuffer& outputBuffer = tty.OutputBuffer();
     outputBuffer.Clear();
     greeting.WriteTo(outputBuffer);
-    outputBuffer.Append(inputBuffer, UnicodeBuffer::CursorMergePolicy::UseAppending);
+
+    if (infinitySidedDiceRollResult % 10 == 3 and inputBuffer.Length() == 0)
+        outputBuffer.Append(" \e[3;90mrandom joke placeholder\e[0m");
+    else
+        outputBuffer.Append(inputBuffer, UnicodeBuffer::CursorMergePolicy::UseAppending);
     
     tty.Render(not interactive);
 }
@@ -36,10 +50,11 @@ void Shell::Run()
                 case UnicodeSymbol::Command::LineFeed:
                     Redraw(false);
 
+                    infinitySidedDiceRollResult = RollInfinitySidedDice();
+
                     ExecuteCommand();
                     
                     inputBuffer.Clear();
-                    tty.Clear();
 
                     break;
 

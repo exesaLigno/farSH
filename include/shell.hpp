@@ -21,6 +21,9 @@ private:
 
     bool rudeMode = false;
 
+    static uint64_t RollInfinitySidedDice();
+    uint64_t infinitySidedDiceRollResult = RollInfinitySidedDice();
+
 public:
     void Redraw(bool interactive = true);
 
