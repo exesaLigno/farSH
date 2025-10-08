@@ -163,4 +163,8 @@ public:
     const size_t BytesLength() const;
 
     const Byte* AsBytes() const;
+
+    friend bool operator==(const UnicodeSymbol& first, const UnicodeSymbol& second);
+    friend bool operator==(const UnicodeSymbol& first, const char second);
+    friend bool operator==(const UnicodeSymbol& first, const char* second);
 };

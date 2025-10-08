@@ -556,3 +556,32 @@ const Byte* UnicodeSymbol::AsBytes() const
 {
     return IsExtended() ? (const Byte*) extendedBytes : (const Byte*) &bytes;
 }
+
+bool operator==(const UnicodeSymbol& first, const UnicodeSymbol& second)
+{
+    if (first.BytesLength() != second.BytesLength())
+        return false;
+    for (size_t idx = 0; idx < first.BytesLength(); idx++)
+        if (first.AsBytes()[idx] != second.AsBytes()[idx])
+            return false;
+    return false;
+}
+
+bool operator==(const UnicodeSymbol& first, const char second)
+{
+    if (not first.OfType( {UnicodeSymbol::Type::ASCIISymbol, UnicodeSymbol::Type::ControlCode} ))
+        return false;
+    if (first.AsBytes()[0] != second)
+        return false;
+    return true;
+}
+
+bool operator==(const UnicodeSymbol& first, const char* second)
+{
+    if (first.BytesLength() != strlen(second))
+        return false;
+    for (size_t idx = 0; idx < first.BytesLength(); idx++)
+        if (first.AsBytes()[idx] != second[idx])
+            return false;
+    return true;
+}
