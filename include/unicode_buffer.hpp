@@ -59,4 +59,8 @@ public:
     using UnicodeString::WriteTo;
     using UnicodeString::begin;
     using UnicodeString::end;
+
+    friend bool operator==(const UnicodeBuffer& first, const UnicodeBuffer& second);
+    friend bool operator==(const UnicodeBuffer& first, const UnicodeString& second);
+    friend bool operator==(const UnicodeBuffer& first, const char* second);
 };

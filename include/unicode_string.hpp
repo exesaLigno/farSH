@@ -195,4 +195,7 @@ public:
 
     UnicodeSymbol* begin() const;
     UnicodeSymbol* end() const;
+
+    friend bool operator==(const UnicodeString& first, const UnicodeString& second);
+    friend bool operator==(const UnicodeString& first, const char* second);
 };
