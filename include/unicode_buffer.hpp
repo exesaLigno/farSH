@@ -39,11 +39,11 @@ public:
 
     enum class CursorMergePolicy
     {
-        PreserveOriginal,
-        UseAppending,
-        MoveStart,
-        MoveEnd,
-        MoveJoinPosition
+        PreserveOriginal, /// Cursor remains in its initial place relative to the text.
+        UseAppending, /// Cursor moves to cursor position of appending buffer.
+        MoveStart, /// After append cursor moves to the beginning of resulting bufffer.
+        MoveEnd, /// After append cursor moves to the end of resulting bufffer.
+        MoveJoinPosition /// After append cursor moves to the point between concatenated buffers.
     };
 
     size_t Append(const UnicodeBuffer& buffer, const CursorMergePolicy merge_policy = CursorMergePolicy::PreserveOriginal);
@@ -57,4 +57,6 @@ public:
 
     using UnicodeString::operator[];
     using UnicodeString::WriteTo;
+    using UnicodeString::begin;
+    using UnicodeString::end;
 };
