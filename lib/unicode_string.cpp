@@ -1,24 +1,10 @@
-#pragma once
+#include "unicode_string.hpp"
 
 #include <functional>
+#include <cassert>
+#include <cstring>
 
-#include "symbol.cpp"
-
-class UnicodeString
-{
-private:
-    static constexpr size_t initialBufferSize = 16;
-
-    UnicodeSymbol* buffer = nullptr;
-    size_t bufferSize = 0;
-    size_t length = 0;
-    size_t width = 0;
-
-    enum class ReallocationMethod
-    {
-        MultiplySize,
-        AppendSize
-    };
+#include "unicode_symbol.hpp"
 
     /**
      * @brief Reallocates internal buffer with provided method and copies all 
@@ -28,7 +14,7 @@ private:
      * by `value`.
      * @param method Reallocation method.
      */
-    void ReallocateBuffer(size_t value, UnicodeString::ReallocationMethod method)
+    void UnicodeString::ReallocateBuffer(size_t value, UnicodeString::ReallocationMethod method)
     {
         assert(
             (method == ReallocationMethod::MultiplySize and value > 1) or 
@@ -57,7 +43,7 @@ private:
         }
     }
     
-    int64_t GetAbsoluteIndex(int64_t relative_index) const
+    int64_t UnicodeString::GetAbsoluteIndex(int64_t relative_index) const
     {
         int64_t absolute_index = (relative_index >= 0) ? relative_index : length + relative_index;
         assert(absolute_index >= 0);
@@ -66,7 +52,7 @@ private:
         return absolute_index;
     }
     
-    UnicodeString(const UnicodeString& other)
+    UnicodeString::UnicodeString(const UnicodeString& other)
     {
         bufferSize = other.bufferSize;
         length = other.length;
@@ -79,13 +65,12 @@ private:
         }
     }
 
-public:
-    UnicodeString()
+    UnicodeString::UnicodeString()
     {
         ReallocateBuffer(initialBufferSize, ReallocationMethod::AppendSize);
     }
 
-    explicit UnicodeString(const char* string, size_t size = 0)
+    UnicodeString::UnicodeString(const char* string, size_t size)
     {
         // Axiom (1).
         // Due to fact that `UnicodeSymbol` consists of at least one byte, it is 
@@ -104,7 +89,7 @@ public:
         }
     }
     
-    UnicodeString(UnicodeString&& other)
+    UnicodeString::UnicodeString(UnicodeString&& other)
     {
         bufferSize = other.bufferSize;
         length = other.length;
@@ -117,7 +102,7 @@ public:
         other.buffer = nullptr;
     }
 
-    ~UnicodeString()
+    UnicodeString::~UnicodeString()
     {
         if (buffer)
         {
@@ -126,7 +111,7 @@ public:
         }
     }
 
-    void Clear()
+    void UnicodeString::Clear()
     {
         length = 0;
         width = 0;
@@ -145,7 +130,7 @@ public:
      * specified position.
      * @return Count of symbols inserted.
      */
-    size_t Insert(int64_t where, const UnicodeString& string)
+    size_t UnicodeString::Insert(int64_t where, const UnicodeString& string)
     {
         int64_t absolute_index = GetAbsoluteIndex(where);
 
@@ -178,7 +163,7 @@ public:
      * `strlen(string)`, entire string will be copied.
      * @return Count of symbols inserted.
      */
-    size_t Insert(int64_t where, const char* string, size_t size = 0)
+    size_t UnicodeString::Insert(int64_t where, const char* string, size_t size)
     {
         size_t string_len = size ? strnlen(string, size) : strlen(string);
         int64_t absolute_index = GetAbsoluteIndex(where);
@@ -219,7 +204,7 @@ public:
      * @param symbol A unicode symbol to insert into string
      * @return Count of symbols inserted.
      */
-    size_t Insert(int64_t where, const UnicodeSymbol& symbol)
+    size_t UnicodeString::Insert(int64_t where, const UnicodeSymbol& symbol)
     {
         int64_t absolute_index = GetAbsoluteIndex(where);
 
@@ -247,7 +232,7 @@ public:
      * @param symbol A symbol to insert into string
      * @return Count of symbols inserted.
      */
-    size_t Insert(int64_t where, const char symbol)
+    size_t UnicodeString::Insert(int64_t where, const char symbol)
     {
         return Insert(where, UnicodeSymbol(symbol));
     }
@@ -259,7 +244,7 @@ public:
      * @param string Unicode string to be appended to the end of current string.
      * @return Count of symbols inserted.
      */
-    size_t Append(const UnicodeString& string)
+    size_t UnicodeString::Append(const UnicodeString& string)
     {
         return Insert(Length(), string);
     }
@@ -273,7 +258,7 @@ public:
      * `strlen(string)`, entire string will be copied.
      * @return Count of symbols inserted.
      */
-    size_t Append(const char* string, size_t size = 0)
+    size_t UnicodeString::Append(const char* string, size_t size)
     {
         return Insert(Length(), string, size);
     }
@@ -284,7 +269,7 @@ public:
      * @param symbol Symbol to be appended to the end of current string.
      * @return Count of symbols inserted.
      */
-    size_t Append(const UnicodeSymbol& symbol)
+    size_t UnicodeString::Append(const UnicodeSymbol& symbol)
     {
         return Insert(Length(), symbol);
     }
@@ -295,7 +280,7 @@ public:
      * @param symbol Symbol to be appended to the end of current string.
      * @return Count of symbols inserted.
      */
-    size_t Append(const char symbol)
+    size_t UnicodeString::Append(const char symbol)
     {
         return Insert(Length(), symbol);
     }
@@ -307,7 +292,7 @@ public:
      * @param string A unicode string to prepend.
      * @return Count of symbols inserted.
      */
-    size_t Prepend(const UnicodeString& string)
+    size_t UnicodeString::Prepend(const UnicodeString& string)
     {
         return Insert(0, string);
     }
@@ -321,7 +306,7 @@ public:
      * `strlen(string)`, entire string will be copied.
      * @return Count of symbols inserted.
      */
-    size_t Prepend(const char* string, size_t size = 0)
+    size_t UnicodeString::Prepend(const char* string, size_t size)
     {
         return Insert(0, string, size);
     }
@@ -332,7 +317,7 @@ public:
      * @param symbol Unicode symbol to prepend.
      * @return Count of symbols inserted.
      */
-    size_t Prepend(const UnicodeSymbol& symbol)
+    size_t UnicodeString::Prepend(const UnicodeSymbol& symbol)
     {
         return Insert(0, symbol);
     }
@@ -343,7 +328,7 @@ public:
      * @param symbol Symbol to prepend.
      * @return Count of symbols inserted.
      */
-    size_t Prepend(const char symbol)
+    size_t UnicodeString::Prepend(const char symbol)
     {
         return Insert(0, symbol);
     }
@@ -356,7 +341,7 @@ public:
      * if `size` is greater or equal then count of symbols after position 
      * `where`
      */
-    void Erase(const size_t where, const size_t size = 1)
+    void UnicodeString::Erase(const size_t where, const size_t size)
     {
         size_t old_length = length;
         
@@ -367,43 +352,30 @@ public:
             buffer[idx - size] = std::move(buffer[idx]);
     }
     
-    UnicodeString operator+(const UnicodeString& other) const
+    UnicodeString UnicodeString::operator+(const UnicodeString& other) const
     {
         UnicodeString result(*this);
         result.Append(other);
         return result;
     }
 
-    UnicodeSymbol& operator[](size_t idx) const
+    UnicodeSymbol& UnicodeString::operator[](size_t idx) const
     {
         return buffer[idx];
     }
 
-    void WriteTo(FILE* fd = stdout) const
+    void UnicodeString::WriteTo(FILE* fd) const
     {
         for (size_t idx = 0; idx < length; idx++)
             buffer[idx].WriteTo(fd);
     }
 
-    size_t Length() const
+    size_t UnicodeString::Length() const
     {
         return length;
     }
 
-    size_t Width() const
+    size_t UnicodeString::Width() const
     {
         return width;
-
-        // size_t calculated_width = 0;
-        // for (size_t idx = 0; idx < length; idx++)
-        // {
-        //     if (buffer[idx].IsCommand() and buffer[idx].GetCommand() == UnicodeSymbol::Command::LineFeed and terminal_width)
-        //         calculated_width += (terminal_width - width % terminal_width);
-
-        //     else
-        //         calculated_width += buffer[idx].DisplayWidth();
-        // }
-
-        // return calculated_width;
     }
-};
