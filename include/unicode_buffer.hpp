@@ -45,11 +45,26 @@ public:
     
     size_t WidthUntilCursor(size_t terminal_width = 0) const;
     
+    size_t Prepend(const UnicodeString& string);
+    size_t Prepend(const char* string, size_t size = 0);
+    size_t Prepend(const UnicodeSymbol& symbol);
+    size_t Prepend(const char symbol);
+
+    using UnicodeString::Append;
+
+    enum class CursorMergePolicy
+    {
+        PreserveOriginal,
+        UseAppending,
+        MoveStart,
+        MoveEnd,
+        MoveJoinPosition
+    };
+
+    size_t Append(const UnicodeBuffer& buffer, const CursorMergePolicy merge_policy = CursorMergePolicy::PreserveOriginal);
+    size_t Prepend(const UnicodeBuffer& buffer, const CursorMergePolicy merge_policy = CursorMergePolicy::PreserveOriginal);
+
     using UnicodeString::Length;
     using UnicodeString::operator[];
     using UnicodeString::WriteTo;
-    
-    /// TODO: Rewrite to preserve cursorPosition on appending and prepending something
-    using UnicodeString::Append;
-    using UnicodeString::Prepend;
 };

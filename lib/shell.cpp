@@ -14,19 +14,7 @@ void Shell::Redraw(bool interactive)
     UnicodeBuffer& outputBuffer = tty.OutputBuffer();
     outputBuffer.Clear();
     greeting.WriteTo(outputBuffer);
-    bool cursor_set = false;
-    for (size_t idx = 0; idx < inputBuffer.Length(); idx++)
-    {            
-        if (idx == inputBuffer.CursorPosition())
-        {
-            outputBuffer.SetCursor();
-            cursor_set = true;
-        }
-        
-        outputBuffer.Append(inputBuffer[idx]);
-    }
-    if (not cursor_set)
-        outputBuffer.SetCursor();
+    outputBuffer.Append(inputBuffer, UnicodeBuffer::CursorMergePolicy::UseAppending);
     
     tty.Render(not interactive);
 }
