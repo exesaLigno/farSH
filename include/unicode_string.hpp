@@ -192,4 +192,7 @@ public:
 
     size_t Length() const;
     size_t Width() const;
+
+    UnicodeSymbol* begin() const;
+    UnicodeSymbol* end() const;
 };

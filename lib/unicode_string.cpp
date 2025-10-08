@@ -42,7 +42,7 @@
             delete[] old_buffer;
         }
     }
-    
+
     int64_t UnicodeString::GetAbsoluteIndex(int64_t relative_index) const
     {
         int64_t absolute_index = (relative_index >= 0) ? relative_index : length + relative_index;
@@ -51,7 +51,7 @@
         
         return absolute_index;
     }
-    
+
     UnicodeString::UnicodeString(const UnicodeString& other)
     {
         bufferSize = other.bufferSize;
@@ -88,7 +88,7 @@
             length++;
         }
     }
-    
+
     UnicodeString::UnicodeString(UnicodeString&& other)
     {
         bufferSize = other.bufferSize;
@@ -148,7 +148,7 @@
         
         return string.length;
     }
-    
+
     /**
      * @brief Inserts provided string in the position `where`. On 
      * insertions into middle of string, remaining part will be moved to make 
@@ -220,7 +220,7 @@
         
         return 1;
     }
-    
+
     /**
      * @brief Inserts provided symbol at specified position. Moves all data from
      * index `where` to the end of string by one symbol and reallocates if it 
@@ -236,7 +236,7 @@
     {
         return Insert(where, UnicodeSymbol(symbol));
     }
-    
+
     /** 
      * @brief Appends provided unicode string to the end of current string. If 
      * remaining capacity is less then provided string, current string will
@@ -248,7 +248,7 @@
     {
         return Insert(Length(), string);
     }
-    
+
     /**
      * @brief Appends provided string to the end of current string. If 
      * remaining capacity is less then provided string, current string will
@@ -262,7 +262,7 @@
     {
         return Insert(Length(), string, size);
     }
-    
+
     /** 
      * @brief Appends provided unicode symbol to the end of current string. If 
      * remaining capacity is zero, current string will be reallocated.
@@ -273,7 +273,7 @@
     {
         return Insert(Length(), symbol);
     }
-    
+
     /** 
      * @brief Appends provided symbol to the end of current string. If 
      * remaining capacity is zero, current string will be reallocated.
@@ -284,7 +284,7 @@
     {
         return Insert(Length(), symbol);
     }
-    
+
     /**
      * @brief Prepends provided unicode string at the beggining of current 
      * string. It reallocates current string internal buffer if it is necessary
@@ -296,7 +296,7 @@
     {
         return Insert(0, string);
     }
-    
+
     /**
      * @brief Prepends provided string at the beggining of current 
      * string. It reallocates current string internal buffer if it is necessary
@@ -321,7 +321,7 @@
     {
         return Insert(0, symbol);
     }
-    
+
     /**
      * @brief Prepends symbol at the beggining of current string. Moves all 
      * symbols one symbol forward and reallocates buffer if it is needed.
@@ -332,7 +332,7 @@
     {
         return Insert(0, symbol);
     }
-    
+
     /**
      * @brief Erases `size` symbols in string, starting from position `where`.
      * After erase moves tails to position `where`.
@@ -351,7 +351,7 @@
         for (size_t idx = where + size; idx < old_length; idx++)
             buffer[idx - size] = std::move(buffer[idx]);
     }
-    
+
     UnicodeString UnicodeString::operator+(const UnicodeString& other) const
     {
         UnicodeString result(*this);
@@ -378,4 +378,14 @@
     size_t UnicodeString::Width() const
     {
         return width;
+    }
+
+    UnicodeSymbol* UnicodeString::begin() const
+    {
+        return buffer;
+    }
+
+    UnicodeSymbol* UnicodeString::end() const
+    {
+        return buffer + length;
     }
