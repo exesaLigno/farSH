@@ -17,12 +17,7 @@ class Shell
 private:
     TTY tty;
     Greeting greeting;
-    char cwd[2048] = { 0 };
-    int inputStartRow = 0;
-    int inputStartColumn = 0;
     UnicodeBuffer inputBuffer;
-
-    UnicodeBuffer tmp_buffer;
 
     bool rudeMode = false;
 
