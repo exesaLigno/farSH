@@ -72,11 +72,6 @@ void UnicodeBuffer::Insert(const char* string, size_t size)
     cursorPosition += UnicodeString::Insert(cursorPosition, string, size);
 }
 
-void UnicodeBuffer::SetCursor()
-{
-    cursorPosition = Length();
-}
-
 bool UnicodeBuffer::CursorAtTheEnd() const
 {
     return cursorPosition == Length();
@@ -93,10 +88,11 @@ size_t UnicodeBuffer::CursorPosition() const
     return cursorPosition;
 }
 
-size_t UnicodeBuffer::WidthUntilPosition(size_t position, size_t terminal_width) const
+size_t UnicodeBuffer::Width(size_t from, size_t to, size_t terminal_width) const
 {
-    size_t calculated_width = 0;
-    for (size_t idx = 0; idx < position; idx++)
+    size_t initial_width = (from != 0 and terminal_width != 0) ? Width(0, from, terminal_width) : 0;
+    size_t calculated_width = initial_width;
+    for (size_t idx = from; idx < to; idx++)
     {
         if (terminal_width and operator[](idx).IsCommand() and operator[](idx).GetCommand() == UnicodeSymbol::Command::LineFeed)
             calculated_width += (terminal_width - calculated_width % terminal_width);
@@ -108,7 +104,7 @@ size_t UnicodeBuffer::WidthUntilPosition(size_t position, size_t terminal_width)
             calculated_width += operator[](idx).DisplayWidth();
     }
 
-    return calculated_width;
+    return calculated_width - initial_width;
 }
 
 size_t UnicodeBuffer::Width(size_t terminal_width) const
@@ -116,12 +112,12 @@ size_t UnicodeBuffer::Width(size_t terminal_width) const
     if (terminal_width == 0)
         return UnicodeString::Width();
         
-    return WidthUntilPosition(Length(), terminal_width);
+    return Width(0, Length(), terminal_width);
 }
 
 size_t UnicodeBuffer::WidthUntilCursor(size_t terminal_width) const
 {
-    return WidthUntilPosition(CursorPosition(), terminal_width);
+    return Width(0, CursorPosition(), terminal_width);
 }
 
 size_t UnicodeBuffer::Prepend(const UnicodeString& string)
