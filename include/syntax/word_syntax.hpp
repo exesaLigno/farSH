@@ -9,7 +9,8 @@ protected:
     void DumpNodeTo(FILE* fd) override;
 
 public:
-    WordSyntax(const char* word);
+    WordSyntax(const char* _word);
+    ~WordSyntax();
 
     const char* Word();
 };
