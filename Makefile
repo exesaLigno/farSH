@@ -32,4 +32,4 @@ $(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJECTS) $(TARGET)
+	rm -rf $(OBJECT_DIR) $(EXECUTABLES_DIR) $(TARGET)
