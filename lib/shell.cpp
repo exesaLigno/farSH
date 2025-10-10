@@ -24,6 +24,7 @@ void Shell::Redraw(bool interactive)
     UnicodeBuffer& outputBuffer = tty.OutputBuffer();
     outputBuffer.Clear();
     greeting.WriteTo(outputBuffer);
+    printf("\e]2;%s\a", Greeting::GetWorkDir());
 
     if (infinitySidedDiceRollResult % 10 == 3 and inputBuffer.Length() == 0)
         outputBuffer.Append(" \e[3;90mrandom joke placeholder\e[0m");
