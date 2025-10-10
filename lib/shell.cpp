@@ -26,7 +26,7 @@ void Shell::Redraw(bool interactive)
     greeting.WriteTo(outputBuffer);
     printf("\e]2;%s\a", Greeting::GetWorkDir());
 
-    if (infinitySidedDiceRollResult % 10 == 3 and inputBuffer.Length() == 0)
+    if (infinitySidedDiceRollResult % 10 == 3 and not inputBuffer.Edited())
         outputBuffer.Append(" \e[3;90mrandom joke placeholder\e[0m");
     else
         outputBuffer.Append(inputBuffer, UnicodeBuffer::CursorMergePolicy::UseAppending);
@@ -49,6 +49,7 @@ void Shell::Run()
             switch (symbol.GetCommand())
             {
                 case UnicodeSymbol::Command::LineFeed:
+                    inputBuffer.AssumeEdited();
                     Redraw(false);
 
                     infinitySidedDiceRollResult = RollInfinitySidedDice();

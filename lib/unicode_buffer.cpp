@@ -36,6 +36,7 @@ void UnicodeBuffer::MoveCursorToEnd()
 
 void UnicodeBuffer::ClearSymbolBefore()
 {
+    edited = true;
     size_t old_cursor_position = cursorPosition;
 
     while (cursorPosition > 0 and operator[](--cursorPosition).DisplayWidth() == 0);
@@ -45,6 +46,7 @@ void UnicodeBuffer::ClearSymbolBefore()
 
 void UnicodeBuffer::ClearSymbolAfter()
 {
+    edited = true;
     size_t removing_length = 0;
     
     while (operator[](cursorPosition + removing_length++).DisplayWidth() == 0 and cursorPosition < Length());
@@ -54,21 +56,25 @@ void UnicodeBuffer::ClearSymbolAfter()
 
 void UnicodeBuffer::Insert(const UnicodeSymbol& symbol)
 {
+    edited = true;
     cursorPosition += UnicodeString::Insert(cursorPosition, symbol);
 }
 
 void UnicodeBuffer::Insert(const char symbol)
 {
+    edited = true;
     cursorPosition += UnicodeString::Insert(cursorPosition, symbol);
 }
 
 void UnicodeBuffer::Insert(const UnicodeString& string)
 {
+    edited = true;
     cursorPosition += UnicodeString::Insert(cursorPosition, string);
 }
 
 void UnicodeBuffer::Insert(const char* string, size_t size)
 {
+    edited = true;
     cursorPosition += UnicodeString::Insert(cursorPosition, string, size);
 }
 
@@ -81,6 +87,7 @@ void UnicodeBuffer::Clear()
 {
     UnicodeString::Clear();
     cursorPosition = 0;
+    edited = false;
 }
 
 size_t UnicodeBuffer::CursorPosition() const
@@ -122,6 +129,7 @@ size_t UnicodeBuffer::WidthUntilCursor(size_t terminal_width) const
 
 size_t UnicodeBuffer::Prepend(const UnicodeString& string)
 {
+    edited = true;
     size_t prepended_size = UnicodeString::Prepend(string);
     cursorPosition += prepended_size;
     return prepended_size;
@@ -129,6 +137,7 @@ size_t UnicodeBuffer::Prepend(const UnicodeString& string)
 
 size_t UnicodeBuffer::Prepend(const char* string, size_t size)
 {
+    edited = true;
     size_t prepended_size = UnicodeString::Prepend(string, size);
     cursorPosition += prepended_size;
     return prepended_size;
@@ -136,6 +145,7 @@ size_t UnicodeBuffer::Prepend(const char* string, size_t size)
 
 size_t UnicodeBuffer::Prepend(const UnicodeSymbol& symbol)
 {
+    edited = true;
     size_t prepended_size = UnicodeString::Prepend(symbol);
     cursorPosition += prepended_size;
     return prepended_size;
@@ -143,6 +153,7 @@ size_t UnicodeBuffer::Prepend(const UnicodeSymbol& symbol)
 
 size_t UnicodeBuffer::Prepend(const char symbol)
 {
+    edited = true;
     size_t prepended_size = UnicodeString::Prepend(symbol);
     cursorPosition += prepended_size;
     return prepended_size;
@@ -150,6 +161,7 @@ size_t UnicodeBuffer::Prepend(const char symbol)
 
 size_t UnicodeBuffer::Prepend(const UnicodeBuffer& other, CursorMergePolicy merge_policy)
 {
+    edited = true;
     size_t prepended_size = UnicodeString::Prepend(other);
 
     switch (merge_policy)
@@ -176,6 +188,7 @@ size_t UnicodeBuffer::Prepend(const UnicodeBuffer& other, CursorMergePolicy merg
 
 size_t UnicodeBuffer::Append(const UnicodeBuffer& other, CursorMergePolicy merge_policy)
 {
+    edited = true;
     size_t initial_length = Length();
 
     size_t appended_size = UnicodeString::Append(other);
@@ -199,4 +212,14 @@ size_t UnicodeBuffer::Append(const UnicodeBuffer& other, CursorMergePolicy merge
     }
 
     return appended_size;
+}
+
+bool UnicodeBuffer::Edited() const
+{
+    return edited;
+}
+
+void UnicodeBuffer::AssumeEdited()
+{
+    edited = true;
 }

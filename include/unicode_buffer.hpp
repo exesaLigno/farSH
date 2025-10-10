@@ -9,6 +9,7 @@ class UnicodeBuffer : UnicodeString
 {
 private:
     size_t cursorPosition = 0;
+    bool edited = false;
 
     size_t Width(size_t from, size_t to, size_t terminal_width = 0) const;
 
@@ -54,6 +55,8 @@ public:
     using UnicodeString::Length;
     size_t Width(size_t terminal_width = 0) const;
     size_t WidthUntilCursor(size_t terminal_width = 0) const;
+    bool Edited() const;
+    void AssumeEdited();
 
     using UnicodeString::operator[];
     using UnicodeString::WriteTo;
