@@ -23,4 +23,3 @@ void WordSyntax::DumpNodeTo(FILE* fd)
 {
     fprintf(fd, "\tnode_%x [label=\"Its a Word syntax!\"]\n", this);
 }
-
