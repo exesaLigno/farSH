@@ -1,0 +1,61 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build (Debug)",
+            "command": "make",
+            "type": "process",
+            "args": [
+                "DEBUG=1",
+                "-j", "4"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "rebuild (Debug)",
+            "command": "make",
+            "type": "process",
+            "args": [
+                "-B",
+                "DEBUG=1",
+                "-j", "4"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build (Release)",
+            "command": "make",
+            "type": "process",
+            "args": [
+                "-j", "4"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "rebuild (Release)",
+            "command": "make",
+            "type": "process",
+            "args": [
+                "-B",
+                "-j", "4"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
+}
