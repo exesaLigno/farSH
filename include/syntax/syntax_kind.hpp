@@ -6,5 +6,6 @@ enum class SyntaxKind
     Word,
     EnvironmentVariableReference,
     RawStringLiteral,
+    PipeRedirection,
     Command,
 };

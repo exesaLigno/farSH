@@ -14,3 +14,4 @@
 #include "syntax/environment_variable_reference_syntax.hpp"
 #include "syntax/command_syntax.hpp"
 #include "syntax/raw_string_literal_syntax.hpp"
+#include "syntax/pipe_redirection_syntax.hpp"
