@@ -1,4 +1,7 @@
+#pragma once
+
 #include "syntax_node.hpp"
+#include "unicode/string.hpp"
 
 class SyntaxTree
 {
@@ -6,7 +9,7 @@ private:
     SyntaxNode* root = nullptr;
 
 public:
-    SyntaxTree();
+    SyntaxTree(const UnicodeString& string);
     ~SyntaxTree();
     
     SyntaxTree(const SyntaxTree& other) = delete;
@@ -15,5 +18,9 @@ public:
     SyntaxTree(SyntaxTree&& other);
     SyntaxTree& operator=(SyntaxTree&& other);
 
-    SyntaxNode* Root();
+    SyntaxNode* Root() const;
+
+    void DumpTo(FILE* fd) const;
+
+    SyntaxNode* Parse(const UnicodeString& string) const;
 };

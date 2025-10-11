@@ -4,7 +4,7 @@ enum class SyntaxKind
 {
     Unknown,
     Word,
-    StringLiteral,
-    EnvironmentVariable,
+    EnvironmentVariableReference,
+    RawStringLiteral,
     Command,
 };

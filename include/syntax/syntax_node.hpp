@@ -17,6 +17,7 @@ protected:
     SyntaxNode(SyntaxKind _kind);
 
     virtual void DumpNodeTo(FILE* fd);
+    virtual void DumpEdgesTo(FILE* fd);
     void DumpSubgraphTo(FILE* fd);
 
 public:

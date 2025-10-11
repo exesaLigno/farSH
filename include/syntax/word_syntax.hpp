@@ -1,3 +1,5 @@
+#pragma once
+
 #include "syntax_node.hpp"
 
 class WordSyntax : public SyntaxNode
@@ -10,6 +12,7 @@ protected:
 
 public:
     WordSyntax(const char* _word);
+    WordSyntax(char* _word);
     ~WordSyntax();
 
     const char* Word();

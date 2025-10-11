@@ -8,6 +8,11 @@ WordSyntax::WordSyntax(const char* _word) : SyntaxNode(SyntaxKind::Word)
     strcpy(word, _word);
 }
 
+WordSyntax::WordSyntax(char* _word) : SyntaxNode(SyntaxKind::Word) 
+{
+    word = _word;
+}
+
 WordSyntax::~WordSyntax()
 {
     if (word)
@@ -21,5 +26,5 @@ WordSyntax::~WordSyntax()
 
 void WordSyntax::DumpNodeTo(FILE* fd)
 {
-    fprintf(fd, "\tnode_%x [label=\"Its a Word syntax!\"]\n", this);
+    fprintf(fd, "\tnode_%x [shape=record; label=\"{WordSyntax | %s}\"]\n", this, word);
 }
