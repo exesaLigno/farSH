@@ -198,4 +198,6 @@ public:
 
     friend bool operator==(const UnicodeString& first, const UnicodeString& second);
     friend bool operator==(const UnicodeString& first, const char* second);
+
+    char* ToString(size_t start_idx = 0, size_t end_idx = 0) const;
 };

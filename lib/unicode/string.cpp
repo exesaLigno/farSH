@@ -389,3 +389,23 @@ UnicodeSymbol* UnicodeString::end() const
 {
     return buffer + length;
 }
+
+char* UnicodeString::ToString(size_t start_idx, size_t end_idx) const
+{
+    size_t real_end_idx = (end_idx <= start_idx) ? Length() : end_idx;
+    size_t string_size = 1;
+    
+    for (size_t idx = start_idx; idx < real_end_idx; idx++)
+        string_size += operator[](idx).BytesLength();
+
+    char* string = new char[string_size] { 0 };
+
+    char* string_ptr = string;
+    for (size_t idx = start_idx; idx < real_end_idx; idx++)
+    {
+        memcpy(string_ptr, operator[](idx).AsBytes(), operator[](idx).BytesLength());
+        string_ptr += operator[](idx).BytesLength();
+    }
+
+    return string;
+}
