@@ -12,6 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: make
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Build farSH
       run: make
+    - name: Upload executable artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: farsh
+        path: build/executable/farsh
+        retention-days: 30
