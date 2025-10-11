@@ -1,7 +1,6 @@
 #pragma once
 
 #include "syntax_node.hpp"
-#include "word_syntax.hpp"
 
 class CommandSyntax : public SyntaxNode
 {
