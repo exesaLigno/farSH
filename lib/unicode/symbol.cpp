@@ -1,4 +1,4 @@
-#include "unicode_symbol.hpp"
+#include "unicode/symbol.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -7,7 +7,7 @@
 #include <functional>
 #include <initializer_list>
 
-#include "wchar_utils.hpp"
+#include "unicode/wchar_utils.hpp"
 
 UnicodeSymbol::Command UnicodeSymbol::GetControlCodeCommand() const
 {

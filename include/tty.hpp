@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <cstdio>
 
-#include "unicode_symbol.hpp"
-#include "unicode_buffer.hpp"
+#include "unicode/symbol.hpp"
+#include "unicode/buffer.hpp"
 
 class TTY
 {

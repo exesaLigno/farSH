@@ -2,8 +2,8 @@
 
 #include <cstdlib>
 
-#include "unicode_symbol.hpp"
-#include "unicode_string.hpp"
+#include "symbol.hpp"
+#include "string.hpp"
 
 class UnicodeBuffer : UnicodeString
 {

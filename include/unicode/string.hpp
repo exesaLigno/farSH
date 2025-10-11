@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-#include "unicode_symbol.hpp"
+#include "symbol.hpp"
 
 class UnicodeString
 {

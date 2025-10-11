@@ -10,7 +10,7 @@
 
 #include "greeting.hpp"
 #include "tty.hpp"
-#include "unicode_buffer.hpp"
+#include "unicode/buffer.hpp"
 
 class Shell
 {

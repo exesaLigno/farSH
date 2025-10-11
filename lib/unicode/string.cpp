@@ -1,10 +1,10 @@
-#include "unicode_string.hpp"
+#include "unicode/string.hpp"
 
 #include <functional>
 #include <cassert>
 #include <cstring>
 
-#include "unicode_symbol.hpp"
+#include "unicode/symbol.hpp"
 
 /**
  * @brief Reallocates internal buffer with provided method and copies all 
