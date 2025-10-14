@@ -6,7 +6,7 @@ EXECUTABLES_DIR = $(BUILD_DIR)/executable
 
 CXX = g++
 CXX_STANDARD = c++2a
-CXXFLAGS = -I$(HEADER_DIR) --std=$(CXX_STANDARD)
+CXXFLAGS = -I$(HEADER_DIR) --std=$(CXX_STANDARD) -MD
 CXXFLAGS_RELEASE = -O3
 CXXFLAGS_DEBUG = -O0 -g -DDEBUG=1
 LDFLAGS = 
@@ -33,3 +33,5 @@ $(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp
 .PHONY: clean
 clean:
 	rm -rf $(OBJECT_DIR) $(EXECUTABLES_DIR) $(TARGET)
+
+-include $(OBJECTS:.o=.d)
