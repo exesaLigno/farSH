@@ -8,6 +8,7 @@
 #include <ctime>
 #include <cstring>
 #include <csignal>
+#include <syntax/syntax_tree.hpp>
 
 uint64_t Shell::RollInfinitySidedDice()
 {
@@ -20,6 +21,12 @@ uint64_t Shell::RollInfinitySidedDice()
 
 void Shell::Redraw(bool interactive)
 {
+    SyntaxTree syntax_tree = SyntaxTree(inputBuffer.AsUnicodeString());
+
+    FILE* dump = fopen("ast.dot", "w");
+    syntax_tree.DumpTo(dump);
+    fclose(dump);
+
     tty.Clear();
     UnicodeBuffer& outputBuffer = tty.OutputBuffer();
     outputBuffer.Clear();
