@@ -8,7 +8,7 @@
 class Greeting
 {
 private:
-    char scheme[1000] = "{cwd} $> ";
+    char scheme[1000] = "\e[1;32m{username}\e[0m\e[1m@\e[34m{hostname}\e[0m \e[32m{cwd}\e[0m> ";
     static constexpr int hostNameBufferSize = 1000;
     static constexpr int workDirBufferSize = 4000;
 
@@ -27,7 +27,7 @@ public:
     static const char* GetUserName();
     static const char* GetHostName();
     static const char* GetHomeDir();
-    static const char* GetWorkDir(bool shorten_home_dir = true, bool shorten_parential_dir_path = true, bool truncate_parential_dir_path = true);
+    static const char* GetWorkDir(bool shorten_home_dir = true, bool shorten_parential_dir_path = true, bool truncate_parential_dir_path = false);
 
     void WriteTo(UnicodeBuffer& buffer);
 };

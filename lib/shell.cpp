@@ -23,7 +23,7 @@ void Shell::Redraw(bool interactive)
 {
     SyntaxTree syntax_tree = SyntaxTree(inputBuffer.AsUnicodeString());
 
-    FILE* dump = fopen("ast.dot", "w");
+    FILE* dump = fopen("/tmp/farsh/current_ast.dot", "w");
     syntax_tree.DumpTo(dump);
     fclose(dump);
 
