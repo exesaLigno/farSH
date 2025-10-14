@@ -16,6 +16,9 @@ private:
     static const passwd* GetPwuid();
     static const char* GetInfo(const char* const entry_name, size_t entry_name_size);
 
+    static void CheckAndReplaceHomeDir(char workdir[]);
+    static void ShortenParentDirectoryPath(char workdir[]);
+
 public:
     Greeting();
     Greeting(const char* _scheme);
@@ -23,7 +26,7 @@ public:
     static const char* GetUserName();
     static const char* GetHostName();
     static const char* GetHomeDir();
-    static const char* GetWorkDir(bool shorten_home_dir = false, bool shorten_parential_dir_path = false, bool truncate_parential_dir_path = false);
+    static const char* GetWorkDir(bool shorten_home_dir = true, bool shorten_parential_dir_path = false, bool truncate_parential_dir_path = false);
 
     void WriteTo(UnicodeBuffer& buffer);
 };

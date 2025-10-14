@@ -33,11 +33,55 @@ const char* Greeting::GetHomeDir()
     return GetPwuid()->pw_dir;
 }
 
+void Greeting::CheckAndReplaceHomeDir(char workdir[])
+{
+    #define IsSepSymbol(sym) (sym == '/' or sym == '\\' or sym == '\0')
+
+    const char* homedir = GetHomeDir();
+    size_t homedir_len = strlen(homedir);
+    size_t workdir_len = strlen(workdir);
+    
+    if (homedir_len > workdir_len)
+        return;
+
+    bool replace = true;
+    size_t replace_until_idx = 0;
+
+    for (replace_until_idx = 0; replace_until_idx < homedir_len; replace_until_idx++)
+        if (homedir[replace_until_idx] != workdir[replace_until_idx])
+        {
+            replace = false;
+            break;
+        }
+
+    if (replace and IsSepSymbol(workdir[replace_until_idx]))
+    {
+        workdir[0] = '~';
+
+        size_t destination_idx = 1;
+        for (size_t source_idx = replace_until_idx; source_idx < workdir_len; source_idx++, destination_idx++)
+            workdir[destination_idx] = workdir[source_idx];
+
+        workdir[destination_idx] = '\0';
+    }
+
+    #undef IsSepSymbol
+}
+
+void Greeting::ShortenParentDirectoryPath(char workdir[])
+{
+    
+}
+
 const char* Greeting::GetWorkDir(bool shorten_home_dir, bool shorten_parential_dir_path, bool truncate_parential_dir_path)
 {
     static char workdir[workDirBufferSize] = { 0 };
     getcwd(workdir, workDirBufferSize);
     workdir[workDirBufferSize - 1] = 0;
+
+    if (shorten_home_dir)
+        CheckAndReplaceHomeDir(workdir);
+
     return workdir;
 }
 
@@ -63,13 +107,6 @@ void Greeting::WriteTo(UnicodeBuffer& buffer)
 {
     const char* scheme_ptr = scheme;
     const char* substr_start = scheme_ptr;
-
-    // enum class State
-    // {
-    //     PlainText, EntityName
-    // };
-
-    // State state = State::PlainText;
 
     for (const char* scheme_ptr = scheme; *scheme_ptr != 0; scheme_ptr++)
     {
