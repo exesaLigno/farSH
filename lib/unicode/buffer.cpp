@@ -223,3 +223,8 @@ void UnicodeBuffer::AssumeEdited()
 {
     edited = true;
 }
+
+const UnicodeString& UnicodeBuffer::AsUnicodeString() const
+{
+    return *((UnicodeString*) this);
+}

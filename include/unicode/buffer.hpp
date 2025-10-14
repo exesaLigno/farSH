@@ -66,4 +66,6 @@ public:
     friend bool operator==(const UnicodeBuffer& first, const UnicodeBuffer& second);
     friend bool operator==(const UnicodeBuffer& first, const UnicodeString& second);
     friend bool operator==(const UnicodeBuffer& first, const char* second);
+
+    const UnicodeString& AsUnicodeString() const;
 };
