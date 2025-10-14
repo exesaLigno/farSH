@@ -70,7 +70,56 @@ void Greeting::CheckAndReplaceHomeDir(char workdir[])
 
 void Greeting::ShortenParentDirectoryPath(char workdir[])
 {
-    
+    size_t len = strlen(workdir);
+    char* read_ptr = workdir + len - 1;
+    char* write_ptr = read_ptr;
+
+    bool copy_full = true;
+    size_t final_size = 0;
+
+    while (read_ptr >= workdir)
+    {
+        if (*read_ptr == '/')
+            copy_full = false;
+
+        if (
+            (*read_ptr == '/') or copy_full or
+            (!copy_full and (read_ptr == workdir) or *(read_ptr - 1) == '/')
+        )
+        {
+            *(write_ptr--) = *(read_ptr--);
+            final_size++;
+        }
+
+        else
+            read_ptr--;
+    }
+
+    for (size_t idx = 0; idx < final_size; idx++)
+        workdir[idx] = write_ptr[idx + 1];
+
+    workdir[final_size] = '\0';
+}
+
+void Greeting::TruncateParentDirectoryPath(char workdir[])
+{
+    if (strlen(workdir) == 1)
+        return;
+
+    char* start = workdir;
+    size_t final_size = 0;
+
+    for (size_t idx = 0; idx < strlen(workdir); idx++, final_size++)
+        if (workdir[idx] == '/')
+        {
+            start = workdir + idx + 1;
+            final_size = 0;
+        }
+
+    for (size_t idx = 0; idx < final_size; idx++)
+        workdir[idx] = start[idx];
+
+    workdir[final_size] = '\0';
 }
 
 const char* Greeting::GetWorkDir(bool shorten_home_dir, bool shorten_parential_dir_path, bool truncate_parential_dir_path)
@@ -81,6 +130,12 @@ const char* Greeting::GetWorkDir(bool shorten_home_dir, bool shorten_parential_d
 
     if (shorten_home_dir)
         CheckAndReplaceHomeDir(workdir);
+
+    if (shorten_parential_dir_path)
+        ShortenParentDirectoryPath(workdir);
+
+    if (truncate_parential_dir_path)
+        TruncateParentDirectoryPath(workdir);
 
     return workdir;
 }

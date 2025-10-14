@@ -18,6 +18,7 @@ private:
 
     static void CheckAndReplaceHomeDir(char workdir[]);
     static void ShortenParentDirectoryPath(char workdir[]);
+    static void TruncateParentDirectoryPath(char workdir[]);
 
 public:
     Greeting();
@@ -26,7 +27,7 @@ public:
     static const char* GetUserName();
     static const char* GetHostName();
     static const char* GetHomeDir();
-    static const char* GetWorkDir(bool shorten_home_dir = true, bool shorten_parential_dir_path = false, bool truncate_parential_dir_path = false);
+    static const char* GetWorkDir(bool shorten_home_dir = true, bool shorten_parential_dir_path = true, bool truncate_parential_dir_path = true);
 
     void WriteTo(UnicodeBuffer& buffer);
 };
