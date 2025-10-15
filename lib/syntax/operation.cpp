@@ -1,10 +1,9 @@
-#include "syntax/syntax_node.hpp"
+#include "syntax/operation.hpp"
 
 #include <cstring>
 
-SyntaxNode::SyntaxNode() { }
-SyntaxNode::SyntaxNode(SyntaxKind _kind) : kind(_kind) { }
-SyntaxNode::~SyntaxNode()
+Operation::Operation(OperationKind _kind) : kind(_kind) { }
+Operation::~Operation()
 {
     if (children)
     {
@@ -15,35 +14,35 @@ SyntaxNode::~SyntaxNode()
     }
 }
 
-SyntaxKind SyntaxNode::Kind()
+OperationKind Operation::Kind()
 {
     return kind;
 }
 
-bool SyntaxNode::OfKind(SyntaxKind _kind)
+bool Operation::OfKind(OperationKind _kind)
 {
     return kind == _kind;
 }
 
-bool SyntaxNode::OfKind(std::initializer_list<SyntaxKind> _kinds)
+bool Operation::OfKind(std::initializer_list<OperationKind> _kinds)
 {
-    for (SyntaxKind _kind : _kinds)
+    for (OperationKind _kind : _kinds)
         if (kind == _kind)
             return true;
     return false;
 }
 
-void SyntaxNode::AppendChild(SyntaxNode* child)
+void Operation::AppendChild(Operation* child)
 {
     size_t old_children_len = children_len;
-    SyntaxNode** old_children = children;
+    Operation** old_children = children;
 
     children_len += 1;
-    children = new SyntaxNode*[children_len];
+    children = new Operation*[children_len];
 
     if (old_children)
     {
-        memcpy(children, old_children, sizeof(SyntaxNode*) * old_children_len);
+        memcpy(children, old_children, sizeof(Operation*) * old_children_len);
         delete[] old_children;
     }
 
@@ -51,33 +50,33 @@ void SyntaxNode::AppendChild(SyntaxNode* child)
     child->parent = this;
 }
 
-size_t SyntaxNode::ChildrenCount()
+size_t Operation::ChildrenCount()
 {
     return children_len;
 }
 
-SyntaxNode* SyntaxNode::GetChild(size_t idx)
+Operation* Operation::GetChild(size_t idx)
 {
     return children[idx];
 }
 
-SyntaxNode* SyntaxNode::GetParent()
+Operation* Operation::GetParent()
 {
     return parent;
 }
 
-void SyntaxNode::DumpNodeTo(FILE* fd)
+void Operation::DumpNodeTo(FILE* fd)
 {
     fprintf(fd, "\tnode_%x\n", this, kind);
 }
 
-void SyntaxNode::DumpEdgesTo(FILE* fd)
+void Operation::DumpEdgesTo(FILE* fd)
 {
     for (size_t idx = 0; idx < children_len; idx++)
         fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
 }
 
-void SyntaxNode::DumpSubgraphTo(FILE* fd)
+void Operation::DumpSubgraphTo(FILE* fd)
 {
     DumpNodeTo(fd);
 
@@ -87,7 +86,7 @@ void SyntaxNode::DumpSubgraphTo(FILE* fd)
     DumpEdgesTo(fd);
 }
 
-void SyntaxNode::DumpSyntaxTo(FILE* fd)
+void Operation::DumpTo(FILE* fd)
 {
     fputs("digraph G {\n", fd);
     DumpSubgraphTo(fd);
