@@ -11,4 +11,8 @@ protected:
 
 public:
     InvocationOperation();
+
+    const Operation* ProgramName() const;
+    size_t ArgumentsCount() const;
+    const Operation* Argument(size_t idx) const;
 };

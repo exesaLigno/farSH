@@ -11,4 +11,7 @@ protected:
 
 public:
     CompositionOperation();
+
+    size_t ValuesCount() const;
+    const Operation* Value(size_t idx) const;
 };

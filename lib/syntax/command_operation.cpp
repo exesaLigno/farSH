@@ -11,10 +11,15 @@ void CommandOperation::DumpNodeTo(FILE* fd)
 void CommandOperation::DumpEdgesTo(FILE* fd)
 {
     for (size_t idx = 0; idx < children_len; idx++)
-        fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
+        fprintf(fd, "\tnode_%x -> node_%x [label=\"ExecutionUnit\"]\n", this, children[idx]);
 }
 
 CommandOperation::CommandOperation() : Operation(OperationKind::Command)
 {
 
+}
+
+const Operation* CommandOperation::ExecutionUnit() const
+{
+    return children[0];
 }

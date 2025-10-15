@@ -11,4 +11,6 @@ protected:
 
 public:
     CommandOperation();
+
+    const Operation* ExecutionUnit() const;
 };

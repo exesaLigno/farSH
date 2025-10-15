@@ -11,4 +11,6 @@ protected:
 
 public:
     ArgumentOperation();
+
+    const Operation* Value() const;
 };

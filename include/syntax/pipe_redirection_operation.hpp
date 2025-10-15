@@ -11,4 +11,7 @@ protected:
 
 public:
     PipeRedirectionOperation();
+
+    const Operation* Source() const;
+    const Operation* Destination() const;
 };

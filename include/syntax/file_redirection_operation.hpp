@@ -11,4 +11,7 @@ protected:
 
 public:
     FileRedirectionOperation();
+
+    const Operation* Source() const;
+    const Operation* Destination() const;
 };

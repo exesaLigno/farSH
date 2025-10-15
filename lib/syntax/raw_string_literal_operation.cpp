@@ -5,7 +5,7 @@
 
 void RawStringLiteralOperation::DumpNodeTo(FILE* fd)
 {
-    fprintf(fd, "\tnode_%x [shape=record; label=\"{ Raw string literal | %s }\"]\n", this, text);
+    fprintf(fd, "\tnode_%x [shape=record; label=\"{ RawStringLiteral | %s }\"]\n", this, text);
 }
 
 void RawStringLiteralOperation::DumpEdgesTo(FILE* fd)

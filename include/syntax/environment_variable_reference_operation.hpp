@@ -11,4 +11,6 @@ protected:
 
 public:
     EnvironmentVariableReferenceOperation();
+
+    const Operation* VariableName() const;
 };

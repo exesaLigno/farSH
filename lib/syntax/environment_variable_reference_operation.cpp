@@ -11,10 +11,15 @@ void EnvironmentVariableReferenceOperation::DumpNodeTo(FILE* fd)
 void EnvironmentVariableReferenceOperation::DumpEdgesTo(FILE* fd)
 {
     for (size_t idx = 0; idx < children_len; idx++)
-        fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
+        fprintf(fd, "\tnode_%x -> node_%x [label=\"VariableName\"]\n", this, children[idx]);
 }
 
 EnvironmentVariableReferenceOperation::EnvironmentVariableReferenceOperation() : Operation(OperationKind::EnvironmentVariableReference)
 {
 
+}
+
+const Operation* EnvironmentVariableReferenceOperation::VariableName() const
+{
+    return children[0];
 }

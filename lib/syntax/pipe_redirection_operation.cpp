@@ -11,10 +11,20 @@ void PipeRedirectionOperation::DumpNodeTo(FILE* fd)
 void PipeRedirectionOperation::DumpEdgesTo(FILE* fd)
 {
     for (size_t idx = 0; idx < children_len; idx++)
-        fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
+        fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Destination");
 }
 
 PipeRedirectionOperation::PipeRedirectionOperation() : Operation(OperationKind::PipeRedirection)
 {
 
+}
+
+const Operation* PipeRedirectionOperation::Source() const
+{
+    return children[0];
+}
+
+const Operation* PipeRedirectionOperation::Destination() const
+{
+    return children[1];
 }

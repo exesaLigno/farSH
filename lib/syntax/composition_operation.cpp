@@ -18,3 +18,13 @@ CompositionOperation::CompositionOperation() : Operation(OperationKind::Composit
 {
 
 }
+
+size_t CompositionOperation::ValuesCount() const
+{
+    return children_len;
+}
+
+const Operation* CompositionOperation::Value(size_t idx) const
+{
+    return idx >= children_len ? nullptr : children[idx];
+}
