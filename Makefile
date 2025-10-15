@@ -34,4 +34,8 @@ $(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp
 clean:
 	rm -rf $(OBJECT_DIR) $(EXECUTABLES_DIR) $(TARGET)
 
+.PHONY: cloc
+cloc:
+	cloc ./ --exclude-lang=D,JSON,Markdown,YAML,make
+
 -include $(OBJECTS:.o=.d)
