@@ -6,8 +6,8 @@
 class InvocationOperation : public Operation
 {
 protected:
-    void DumpNodeTo(FILE* fd) override;
-    void DumpEdgesTo(FILE* fd) override;
+    void DumpNodeTo(FILE* fd) const override;
+    void DumpEdgesTo(FILE* fd) const override;
 
 public:
     InvocationOperation();

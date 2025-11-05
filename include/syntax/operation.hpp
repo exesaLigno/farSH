@@ -16,22 +16,22 @@ protected:
 
     Operation(OperationKind _kind);
 
-    virtual void DumpNodeTo(FILE* fd);
-    virtual void DumpEdgesTo(FILE* fd);
-    void DumpSubgraphTo(FILE* fd);
+    virtual void DumpNodeTo(FILE* fd) const;
+    virtual void DumpEdgesTo(FILE* fd) const;
+    void DumpSubgraphTo(FILE* fd) const;
 
 public:
     ~Operation();
 
-    OperationKind Kind();
-    bool OfKind(OperationKind _kind);
-    bool OfKind(std::initializer_list<OperationKind> _kinds);
+    OperationKind Kind() const;
+    bool OfKind(OperationKind _kind) const;
+    bool OfKind(std::initializer_list<OperationKind> _kinds) const;
 
     void AppendChild(Operation* child);
-    size_t ChildrenCount();
-    Operation* GetChild(size_t child_idx);
+    size_t ChildrenCount() const;
+    Operation* GetChild(size_t child_idx) const;
 
-    Operation* GetParent();
+    Operation* GetParent() const;
 
-    void DumpTo(FILE* fd);
+    void DumpTo(FILE* fd) const;
 };

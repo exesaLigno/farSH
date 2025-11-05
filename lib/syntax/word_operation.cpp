@@ -3,12 +3,12 @@
 #include "syntax/operation_kind.hpp"
 #include "syntax/operation.hpp"
 
-void WordOperation::DumpNodeTo(FILE* fd)
+void WordOperation::DumpNodeTo(FILE* fd) const
 {
     fprintf(fd, "\tnode_%x [shape=record; label=\"{ Word | %s }\"]\n", this, text);
 }
 
-void WordOperation::DumpEdgesTo(FILE* fd)
+void WordOperation::DumpEdgesTo(FILE* fd) const
 {
     for (size_t idx = 0; idx < children_len; idx++)
         fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
@@ -17,4 +17,9 @@ void WordOperation::DumpEdgesTo(FILE* fd)
 WordOperation::WordOperation(const char* _text) : Operation(OperationKind::Word)
 {
     text = _text;
+}
+
+const char* WordOperation::GetText() const
+{
+    return text;
 }

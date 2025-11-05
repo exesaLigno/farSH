@@ -14,17 +14,17 @@ Operation::~Operation()
     }
 }
 
-OperationKind Operation::Kind()
+OperationKind Operation::Kind() const
 {
     return kind;
 }
 
-bool Operation::OfKind(OperationKind _kind)
+bool Operation::OfKind(OperationKind _kind) const
 {
     return kind == _kind;
 }
 
-bool Operation::OfKind(std::initializer_list<OperationKind> _kinds)
+bool Operation::OfKind(std::initializer_list<OperationKind> _kinds) const
 {
     for (OperationKind _kind : _kinds)
         if (kind == _kind)
@@ -50,33 +50,33 @@ void Operation::AppendChild(Operation* child)
     child->parent = this;
 }
 
-size_t Operation::ChildrenCount()
+size_t Operation::ChildrenCount() const
 {
     return children_len;
 }
 
-Operation* Operation::GetChild(size_t idx)
+Operation* Operation::GetChild(size_t idx) const
 {
     return children[idx];
 }
 
-Operation* Operation::GetParent()
+Operation* Operation::GetParent() const
 {
     return parent;
 }
 
-void Operation::DumpNodeTo(FILE* fd)
+void Operation::DumpNodeTo(FILE* fd) const
 {
     fprintf(fd, "\tnode_%x\n", this, kind);
 }
 
-void Operation::DumpEdgesTo(FILE* fd)
+void Operation::DumpEdgesTo(FILE* fd) const
 {
     for (size_t idx = 0; idx < children_len; idx++)
         fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
 }
 
-void Operation::DumpSubgraphTo(FILE* fd)
+void Operation::DumpSubgraphTo(FILE* fd) const
 {
     DumpNodeTo(fd);
 
@@ -86,7 +86,7 @@ void Operation::DumpSubgraphTo(FILE* fd)
     DumpEdgesTo(fd);
 }
 
-void Operation::DumpTo(FILE* fd)
+void Operation::DumpTo(FILE* fd) const
 {
     fputs("digraph G {\n", fd);
     DumpSubgraphTo(fd);
