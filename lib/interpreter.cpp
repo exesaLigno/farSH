@@ -10,11 +10,12 @@ void Interpreter::Execute(const Operation* op)
         ExecuteOperation(dynamic_cast<const WordOperation*>(op));
     else if (dynamic_cast<const InvocationOperation*>(op) != nullptr)
         ExecuteOperation(dynamic_cast<const InvocationOperation*>(op));
+    else if (dynamic_cast<const EnvironmentVariableReferenceOperation*>(op) != nullptr)
+        ExecuteOperation(dynamic_cast<const EnvironmentVariableReferenceOperation*>(op));
 }
 
 void Interpreter::ExecuteOperation(const WordOperation* word)
 {
-    // printf("executing word: %s\n", word->GetText());
     char* word_str = new char[strlen(word->GetText()) + 1] { 0 };
     strcpy(word_str, word->GetText());
     stack.Push(word_str);
@@ -48,7 +49,25 @@ void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
         if (not WIFEXITED(wstatus))
             printf("farsh: \x1b[1;31mUnknown command\x1b[0m: %s\n", argv[0]);
 
-        // else
-        // 	this -> last_status = WEXITSTATUS(wstatus);
+        for (int idx = 0; idx < argc; idx++)
+            delete[] argv[idx];
     }
 }
+
+void Interpreter::ExecuteOperation(const EnvironmentVariableReferenceOperation* environment_variable_reference)
+{
+    Execute(environment_variable_reference->VariableName());
+
+    char* name = stack.Pop();
+    char* value = getenv(name);
+
+    if (value == nullptr)
+        stack.Push(new char[1] { 0 });
+    else
+    {
+        char* value_copy = new char[strlen(value) + 1] { 0 };
+        strcpy(value_copy, value);
+        stack.Push(value_copy);
+    }
+}
+

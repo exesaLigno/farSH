@@ -42,12 +42,14 @@ int main(const int argc, const char* const argv[])
 
 	auto invocation = new InvocationOperation();
 	auto prog = new WordOperation("echo");
-	auto arg1_word = new WordOperation("hello");
-	auto arg2_word = new WordOperation("world!");
+	auto arg1_word = new WordOperation("home:");
+	auto arg2 = new EnvironmentVariableReferenceOperation();
+	auto arg2_word = new WordOperation("HOME");
 
 	invocation->AppendChild(prog);
 	invocation->AppendChild(arg1_word);
-	invocation->AppendChild(arg2_word);
+	invocation->AppendChild(arg2);
+	arg2->AppendChild(arg2_word);
 
 	FILE* fd = fopen("ast.dot", "w");
 	invocation->DumpTo(fd);
