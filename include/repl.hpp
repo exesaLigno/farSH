@@ -12,7 +12,7 @@
 #include "tty.hpp"
 #include "unicode/buffer.hpp"
 
-class Shell
+class REPL
 {
 private:
     TTY tty;

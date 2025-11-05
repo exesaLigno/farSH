@@ -1,4 +1,4 @@
-#include "shell.hpp"
+#include "repl.hpp"
 #include "syntax.hpp"
 
 int main(const int argc, const char* const argv[])
@@ -43,7 +43,7 @@ int main(const int argc, const char* const argv[])
 	FILE* fd = fopen("ast.dot", "w");
 	command->DumpTo(fd);
 	fclose(fd);
-	// auto f = Shell();
+	// auto f = REPL();
 	// f.Run();
 
 	// return 0;

@@ -1,4 +1,4 @@
-#include "shell.hpp"
+#include "repl.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -9,7 +9,7 @@
 #include <cstring>
 #include <csignal>
 
-uint64_t Shell::RollInfinitySidedDice()
+uint64_t REPL::RollInfinitySidedDice()
 {
     uint64_t result = (uint64_t) time(nullptr);
     result = (result ^ (result << 3)) | ~(result ^ (result >> 5));
@@ -18,7 +18,7 @@ uint64_t Shell::RollInfinitySidedDice()
     return result;
 }
 
-void Shell::Redraw(bool interactive)
+void REPL::Redraw(bool interactive)
 {
     tty.Clear();
     UnicodeBuffer& outputBuffer = tty.OutputBuffer();
@@ -34,7 +34,7 @@ void Shell::Redraw(bool interactive)
     tty.Render(not interactive);
 }
 
-void Shell::Run()
+void REPL::Run()
 {
     Redraw();
     while (true)
@@ -111,7 +111,7 @@ void Shell::Run()
     }
 }
 
-int Shell::ExecuteCommand()
+int REPL::ExecuteCommand()
 {
     printf("Executing command: '");
     inputBuffer.WriteTo();
