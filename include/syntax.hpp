@@ -8,7 +8,6 @@
 
 #include "syntax/operation.hpp"
 
-#include "syntax/argument_operation.hpp"
 #include "syntax/command_operation.hpp"
 #include "syntax/composition_operation.hpp"
 #include "syntax/file_redirection_operation.hpp"
