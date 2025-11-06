@@ -12,6 +12,8 @@ void Interpreter::Execute(const Operation* op)
         ExecuteOperation(dynamic_cast<const InvocationOperation*>(op));
     else if (dynamic_cast<const EnvironmentVariableReferenceOperation*>(op) != nullptr)
         ExecuteOperation(dynamic_cast<const EnvironmentVariableReferenceOperation*>(op));
+    else if (dynamic_cast<const CompositionOperation*>(op) != nullptr)
+        ExecuteOperation(dynamic_cast<const CompositionOperation*>(op));
 }
 
 void Interpreter::ExecuteOperation(const WordOperation* word)
@@ -71,3 +73,29 @@ void Interpreter::ExecuteOperation(const EnvironmentVariableReferenceOperation* 
     }
 }
 
+void Interpreter::ExecuteOperation(const CompositionOperation* composition)
+{
+    for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
+        Execute(composition->Value(idx));
+
+    const int composition_elements_count = composition->ChildrenCount();
+    char* composition_elements[composition_elements_count + 1];
+    composition_elements[composition_elements_count] = 0;
+
+    size_t final_size = 0;
+
+    for (int idx = composition_elements_count - 1; idx >= 0; idx--)
+    {
+        composition_elements[idx] = stack.Pop();
+        final_size += strlen(composition_elements[idx]);
+    }
+
+    char* result = new char[final_size + 1] { 0 };
+    for (size_t idx = 0; idx < composition_elements_count; idx++)
+        strcat(result, composition_elements[idx]);
+
+    stack.Push(result);
+
+    for (int idx = 0; idx < composition_elements_count; idx++)
+        delete[] composition_elements[idx];
+}

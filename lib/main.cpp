@@ -42,14 +42,20 @@ int main(const int argc, const char* const argv[])
 
 	auto invocation = new InvocationOperation();
 	auto prog = new WordOperation("echo");
-	auto arg1_word = new WordOperation("home:");
-	auto arg2 = new EnvironmentVariableReferenceOperation();
-	auto arg2_word = new WordOperation("HOME");
+	auto arg1_word = new WordOperation("result:");
+	auto composition = new CompositionOperation();
+	auto comp_arg1 = new WordOperation("DOTNET_DIR = ");
+	auto comp_arg2 = new EnvironmentVariableReferenceOperation();
+	auto comp_arg2_word = new WordOperation("HOME");
+	auto comp_arg3 = new WordOperation("/.dotnet");
 
 	invocation->AppendChild(prog);
 	invocation->AppendChild(arg1_word);
-	invocation->AppendChild(arg2);
-	arg2->AppendChild(arg2_word);
+	invocation->AppendChild(composition);
+	composition->AppendChild(comp_arg1);
+	composition->AppendChild(comp_arg2);
+	comp_arg2->AppendChild(comp_arg2_word);
+	composition->AppendChild(comp_arg3);
 
 	FILE* fd = fopen("ast.dot", "w");
 	invocation->DumpTo(fd);
