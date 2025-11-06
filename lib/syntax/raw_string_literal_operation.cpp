@@ -18,3 +18,8 @@ RawStringLiteralOperation::RawStringLiteralOperation(const char* _text) : Operat
 {
     text = _text;
 }
+
+const char* RawStringLiteralOperation::GetText() const
+{
+    return text;
+}

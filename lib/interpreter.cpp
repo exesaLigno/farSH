@@ -23,6 +23,13 @@ void Interpreter::ExecuteOperation(const WordOperation* word)
     stack.Push(word_str);
 }
 
+void Interpreter::ExecuteOperation(const RawStringLiteralOperation* raw_string_literal)
+{
+    char* raw_string_literal_str = new char[strlen(raw_string_literal->GetText()) + 1] { 0 };
+    strcpy(raw_string_literal_str, raw_string_literal->GetText());
+    stack.Push(raw_string_literal_str);
+}
+
 void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
 {
     for (int idx = 0; idx < invocation->ChildrenCount(); idx++)

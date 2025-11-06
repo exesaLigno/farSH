@@ -10,6 +10,7 @@ private:
     Stack<char*> stack;
 
     void ExecuteOperation(const WordOperation* word);
+    void ExecuteOperation(const RawStringLiteralOperation* raw_string_literal);
     void ExecuteOperation(const InvocationOperation* invocation);
     void ExecuteOperation(const EnvironmentVariableReferenceOperation* environment_variable_reference);
     void ExecuteOperation(const CompositionOperation* composition);

@@ -13,4 +13,5 @@ protected:
 
 public:
     RawStringLiteralOperation(const char* _text);
+    const char* GetText() const;
 };
