@@ -5,7 +5,7 @@
 
 void WordOperation::DumpNodeTo(FILE* fd) const
 {
-    fprintf(fd, "\tnode_%x [shape=record; label=\"{ Word | %s }\"]\n", this, text);
+    fprintf(fd, "\tnode_%x [shape=record; label=\"{ Word | \\\"%s\\\" }\"]\n", this, text);
 }
 
 void WordOperation::DumpEdgesTo(FILE* fd) const
