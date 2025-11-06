@@ -40,29 +40,59 @@ int main(const int argc, const char* const argv[])
 	// auto word6 = new WordOperation("errors.txt");
 	// arg4->AppendChild(word6);
 
-	auto invocation = new InvocationOperation();
-	auto prog = new WordOperation("echo");
-	auto arg1_word = new WordOperation("result:");
-	auto composition = new CompositionOperation();
-	auto comp_arg1 = new WordOperation("DOTNET_DIR = ");
-	auto comp_arg2 = new EnvironmentVariableReferenceOperation();
-	auto comp_arg2_word = new WordOperation("HOME");
-	auto comp_arg3 = new WordOperation("/.dotnet");
+	auto cat = new InvocationOperation();
+	auto cat_name = new WordOperation("cat");
+	auto cat_file = new WordOperation("Makefile");
 
-	invocation->AppendChild(prog);
-	invocation->AppendChild(arg1_word);
-	invocation->AppendChild(composition);
-	composition->AppendChild(comp_arg1);
-	composition->AppendChild(comp_arg2);
-	comp_arg2->AppendChild(comp_arg2_word);
-	composition->AppendChild(comp_arg3);
+	cat->AppendChild(cat_name);
+	cat->AppendChild(cat_file);
+
+	auto grep1 = new InvocationOperation();
+	auto grep1_name = new WordOperation("grep");
+	auto grep1_arg = new WordOperation("OBJECTS");
+
+	grep1->AppendChild(grep1_name);
+	grep1->AppendChild(grep1_arg);
+
+	auto grep2 = new InvocationOperation();
+	auto grep2_name = new WordOperation("grep");
+	auto grep2_arg = new WordOperation("TARGET");
+
+	grep2->AppendChild(grep2_name);
+	grep2->AppendChild(grep2_arg);
+
+	auto redir = new FileRedirectionOperation();
+	auto composition = new CompositionOperation();
+	auto carg1 = new WordOperation("log-");
+	auto carg2 = new EnvironmentVariableReferenceOperation();
+	auto carg3 = new WordOperation(".txt");
+	auto varname = new WordOperation("USER");
+
+	composition->AppendChild(carg1);
+	composition->AppendChild(carg2);
+	composition->AppendChild(carg3);
+	carg2->AppendChild(varname);
+
+	auto pipe1 = new PipeRedirectionOperation();
+	auto pipe2 = new PipeRedirectionOperation();
+
+	redir->AppendChild(grep2);
+	redir->AppendChild(composition);
+
+	pipe2->AppendChild(grep1);
+	pipe2->AppendChild(redir);
+
+	pipe1->AppendChild(cat);
+	pipe1->AppendChild(pipe2);
+
+	auto exec = pipe1;
 
 	FILE* fd = fopen("ast.dot", "w");
-	invocation->DumpTo(fd);
+	exec->DumpTo(fd);
 	fclose(fd);
 
 	auto i = Interpreter();
-	i.Execute(invocation);
+	i.Execute(exec);
 
 	// auto f = REPL();
 	// f.Run();

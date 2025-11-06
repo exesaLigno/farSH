@@ -4,6 +4,25 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_not_main_process)
+{
+    child_pid = 0;
+
+    if (just_ensure_not_main_process and not mainProcess)
+        return ProcessKind::Child;
+
+    child_pid = fork();
+
+    if (child_pid == 0)
+    {
+        mainProcess = false;
+        return ProcessKind::Child;
+    }
+
+    else
+        return ProcessKind::Parent;
+}
+
 void Interpreter::Execute(const Operation* op)
 {
     if (dynamic_cast<const WordOperation*>(op) != nullptr)
@@ -14,6 +33,10 @@ void Interpreter::Execute(const Operation* op)
         ExecuteOperation(dynamic_cast<const EnvironmentVariableReferenceOperation*>(op));
     else if (dynamic_cast<const CompositionOperation*>(op) != nullptr)
         ExecuteOperation(dynamic_cast<const CompositionOperation*>(op));
+    else if (dynamic_cast<const PipeRedirectionOperation*>(op) != nullptr)
+        ExecuteOperation(dynamic_cast<const PipeRedirectionOperation*>(op));
+    else if (dynamic_cast<const FileRedirectionOperation*>(op) != nullptr)
+        ExecuteOperation(dynamic_cast<const FileRedirectionOperation*>(op));
 }
 
 void Interpreter::ExecuteOperation(const WordOperation* word)
@@ -40,27 +63,23 @@ void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
     argv[argc] = 0;
     for (int idx = argc - 1; idx >= 0; idx--)
         argv[idx] = stack.Pop();
-
-    pid_t child = fork();
-
+    
+    pid_t child_pid;
     int wstatus = 0;
 
-    if (!child)
+    switch (Fork(child_pid, true))
     {
-        execvp(argv[0], argv);
-        abort();
-    }
-
-    else
-    {
-        wait(&wstatus);
-
-        if (not WIFEXITED(wstatus))
+        case ProcessKind::Child:
+            execvp(argv[0], argv);
             printf("farsh: \x1b[1;31mUnknown command\x1b[0m: %s\n", argv[0]);
+            abort();
 
-        for (int idx = 0; idx < argc; idx++)
-            delete[] argv[idx];
+        case ProcessKind::Parent:
+            wait(&wstatus);
     }
+
+    for (int idx = 0; idx < argc; idx++)
+        delete[] argv[idx];
 }
 
 void Interpreter::ExecuteOperation(const EnvironmentVariableReferenceOperation* environment_variable_reference)
@@ -105,4 +124,57 @@ void Interpreter::ExecuteOperation(const CompositionOperation* composition)
 
     for (int idx = 0; idx < composition_elements_count; idx++)
         delete[] composition_elements[idx];
+}
+
+void Interpreter::ExecuteOperation(const FileRedirectionOperation* file_redirection)
+{
+    Execute(file_redirection->Destination());
+
+    char* filename = stack.Pop();
+
+    FILE* output = fopen(filename, "w");
+    delete[] filename;
+
+    dup2(fileno(output), STDOUT_FILENO);
+
+    Execute(file_redirection->Source());
+
+    fclose(output);
+}
+
+void Interpreter::ExecuteOperation(const PipeRedirectionOperation* pipe_redirection)
+{
+    pid_t child_pid;
+    int wstatus = 0;
+
+    switch (Fork(child_pid))
+    {
+        case ProcessKind::Child:
+            int pipe_fd[2];
+            pipe(pipe_fd);
+
+            switch (Fork(child_pid))
+            {
+                case ProcessKind::Parent:
+                    close(pipe_fd[0]);
+                    dup2(pipe_fd[1], STDOUT_FILENO);
+                    close(pipe_fd[1]);
+
+                    Execute(pipe_redirection->Source());
+                    abort();
+
+                case ProcessKind::Child:
+                    close(pipe_fd[1]);
+                    dup2(pipe_fd[0], STDIN_FILENO);
+                    close(pipe_fd[0]);
+
+                    Execute(pipe_redirection->Destination());
+                    abort();
+            }
+
+            break;
+
+        case ProcessKind::Parent:
+            wait(&wstatus);
+    }
 }
