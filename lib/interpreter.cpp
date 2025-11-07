@@ -23,38 +23,62 @@ Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_no
         return ProcessKind::Parent;
 }
 
-void Interpreter::Execute(const Operation* op)
+void Interpreter::Execute(const Operation* operation)
 {
-    if (dynamic_cast<const WordOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const WordOperation*>(op));
-    else if (dynamic_cast<const InvocationOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const InvocationOperation*>(op));
-    else if (dynamic_cast<const EnvironmentVariableReferenceOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const EnvironmentVariableReferenceOperation*>(op));
-    else if (dynamic_cast<const ConcatenationOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const ConcatenationOperation*>(op));
-    else if (dynamic_cast<const PipeRedirectionOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const PipeRedirectionOperation*>(op));
-    else if (dynamic_cast<const FileRedirectionOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const FileRedirectionOperation*>(op));
+    switch (operation->Kind())
+    {
+        case OperationKind::Word:
+            ExecuteWordOperation(operation);
+            break;
+        case OperationKind::Invocation:
+            ExecuteInvocationOperation(operation);
+            break;
+        case OperationKind::EnvironmentVariableReference:
+            ExecuteEnvironmentVariableReferenceOperation(operation);
+            break;
+        case OperationKind::Concatenation:
+            ExecuteConcatenationOperation(operation);
+            break;
+        case OperationKind::PipeRedirection:
+            ExecutePipeRedirectionOperation(operation);
+            break;
+        case OperationKind::FileRedirection:
+            ExecuteFileRedirectionOperation(operation);
+            break;
+        default:
+            throw std::runtime_error("Trying to execute unsupported operation");
+    }
 }
 
-void Interpreter::ExecuteOperation(const WordOperation* word)
+
+#define CAST_OPERATION(TYPE, destination) \
+    const TYPE* destination = dynamic_cast<const TYPE*>(operation); \
+    if (destination == nullptr) \
+        throw std::runtime_error("Runtime error: Can't cast Operation to " #TYPE " type.");
+
+
+void Interpreter::ExecuteWordOperation(const Operation* operation)
 {
+    CAST_OPERATION(WordOperation, word);
+
     char* word_str = new char[strlen(word->GetText()) + 1] { 0 };
     strcpy(word_str, word->GetText());
-    stack.Push(word_str);
+    executionStack.Push(word_str);
 }
 
-void Interpreter::ExecuteOperation(const RawStringLiteralOperation* raw_string_literal)
+void Interpreter::ExecuteRawStringLiteralOperation(const Operation* operation)
 {
+    CAST_OPERATION(RawStringLiteralOperation, raw_string_literal);
+
     char* raw_string_literal_str = new char[strlen(raw_string_literal->GetText()) + 1] { 0 };
     strcpy(raw_string_literal_str, raw_string_literal->GetText());
-    stack.Push(raw_string_literal_str);
+    executionStack.Push(raw_string_literal_str);
 }
 
-void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
+void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 {
+    CAST_OPERATION(InvocationOperation, invocation);
+
     for (int idx = 0; idx < invocation->ChildrenCount(); idx++)
         Execute(invocation->GetChild(idx));
 
@@ -62,8 +86,8 @@ void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
     char* argv[argc + 1];
     argv[argc] = 0;
     for (int idx = argc - 1; idx >= 0; idx--)
-        argv[idx] = stack.Pop();
-    
+        argv[idx] = executionStack.Pop();
+
     pid_t child_pid;
     int wstatus = 0;
 
@@ -82,25 +106,29 @@ void Interpreter::ExecuteOperation(const InvocationOperation* invocation)
         delete[] argv[idx];
 }
 
-void Interpreter::ExecuteOperation(const EnvironmentVariableReferenceOperation* environment_variable_reference)
+void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* operation)
 {
+    CAST_OPERATION(EnvironmentVariableReferenceOperation, environment_variable_reference);
+
     Execute(environment_variable_reference->VariableName());
 
-    char* name = stack.Pop();
+    char* name = executionStack.Pop();
     char* value = getenv(name);
 
     if (value == nullptr)
-        stack.Push(new char[1] { 0 });
+        executionStack.Push(new char[1] { 0 });
     else
     {
         char* value_copy = new char[strlen(value) + 1] { 0 };
         strcpy(value_copy, value);
-        stack.Push(value_copy);
+        executionStack.Push(value_copy);
     }
 }
 
-void Interpreter::ExecuteOperation(const ConcatenationOperation* composition)
+void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
 {
+    CAST_OPERATION(ConcatenationOperation, composition);
+
     for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
         Execute(composition->Value(idx));
 
@@ -112,7 +140,7 @@ void Interpreter::ExecuteOperation(const ConcatenationOperation* composition)
 
     for (int idx = composition_elements_count - 1; idx >= 0; idx--)
     {
-        composition_elements[idx] = stack.Pop();
+        composition_elements[idx] = executionStack.Pop();
         final_size += strlen(composition_elements[idx]);
     }
 
@@ -120,17 +148,19 @@ void Interpreter::ExecuteOperation(const ConcatenationOperation* composition)
     for (size_t idx = 0; idx < composition_elements_count; idx++)
         strcat(result, composition_elements[idx]);
 
-    stack.Push(result);
+    executionStack.Push(result);
 
     for (int idx = 0; idx < composition_elements_count; idx++)
         delete[] composition_elements[idx];
 }
 
-void Interpreter::ExecuteOperation(const FileRedirectionOperation* file_redirection)
+void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 {
+    CAST_OPERATION(FileRedirectionOperation, file_redirection);
+
     Execute(file_redirection->Destination());
 
-    char* filename = stack.Pop();
+    char* filename = executionStack.Pop();
 
     FILE* output = fopen(filename, "w");
     delete[] filename;
@@ -142,8 +172,10 @@ void Interpreter::ExecuteOperation(const FileRedirectionOperation* file_redirect
     fclose(output);
 }
 
-void Interpreter::ExecuteOperation(const PipeRedirectionOperation* pipe_redirection)
+void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
 {
+    CAST_OPERATION(PipeRedirectionOperation, pipe_redirection);
+
     pid_t child_pid;
     int wstatus = 0;
 
@@ -178,3 +210,5 @@ void Interpreter::ExecuteOperation(const PipeRedirectionOperation* pipe_redirect
             wait(&wstatus);
     }
 }
+
+#undef CAST_OPERATION
