@@ -10,6 +10,6 @@ enum class OperationKind
     Argument,
     RawStringLiteral,
     EnvironmentVariableReference,
-    Composition,
+    Concatenation,
     Word,
 };

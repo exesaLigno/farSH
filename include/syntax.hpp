@@ -8,7 +8,7 @@
 
 #include "syntax/operation.hpp"
 
-#include "syntax/composition_operation.hpp"
+#include "syntax/concatenation_operation.hpp"
 #include "syntax/file_redirection_operation.hpp"
 #include "syntax/invocation_operation.hpp"
 #include "syntax/pipe_redirection_operation.hpp"

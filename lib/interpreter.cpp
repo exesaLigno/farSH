@@ -31,8 +31,8 @@ void Interpreter::Execute(const Operation* op)
         ExecuteOperation(dynamic_cast<const InvocationOperation*>(op));
     else if (dynamic_cast<const EnvironmentVariableReferenceOperation*>(op) != nullptr)
         ExecuteOperation(dynamic_cast<const EnvironmentVariableReferenceOperation*>(op));
-    else if (dynamic_cast<const CompositionOperation*>(op) != nullptr)
-        ExecuteOperation(dynamic_cast<const CompositionOperation*>(op));
+    else if (dynamic_cast<const ConcatenationOperation*>(op) != nullptr)
+        ExecuteOperation(dynamic_cast<const ConcatenationOperation*>(op));
     else if (dynamic_cast<const PipeRedirectionOperation*>(op) != nullptr)
         ExecuteOperation(dynamic_cast<const PipeRedirectionOperation*>(op));
     else if (dynamic_cast<const FileRedirectionOperation*>(op) != nullptr)
@@ -99,7 +99,7 @@ void Interpreter::ExecuteOperation(const EnvironmentVariableReferenceOperation* 
     }
 }
 
-void Interpreter::ExecuteOperation(const CompositionOperation* composition)
+void Interpreter::ExecuteOperation(const ConcatenationOperation* composition)
 {
     for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
         Execute(composition->Value(idx));

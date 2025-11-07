@@ -20,7 +20,7 @@ private:
     void ExecuteOperation(const RawStringLiteralOperation* raw_string_literal);
     void ExecuteOperation(const InvocationOperation* invocation);
     void ExecuteOperation(const EnvironmentVariableReferenceOperation* environment_variable_reference);
-    void ExecuteOperation(const CompositionOperation* composition);
+    void ExecuteOperation(const ConcatenationOperation* composition);
     void ExecuteOperation(const FileRedirectionOperation* file_redirection);
     void ExecuteOperation(const PipeRedirectionOperation* pipe_redirection);
 

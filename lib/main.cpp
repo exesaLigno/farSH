@@ -12,7 +12,7 @@ int main(const int argc, const char* const argv[])
 	// invocation1->AppendChild(word1);
 	// auto arg1 = new ArgumentOperation();
 	// invocation1->AppendChild(arg1);
-	// auto composition = new CompositionOperation();
+	// auto composition = new ConcatenationOperation();
 	// arg1->AppendChild(composition);
 	// auto environ = new EnvironmentVariableReferenceOperation();
 	// composition->AppendChild(environ);
@@ -62,7 +62,7 @@ int main(const int argc, const char* const argv[])
 	grep2->AppendChild(grep2_arg);
 
 	auto redir = new FileRedirectionOperation();
-	auto composition = new CompositionOperation();
+	auto composition = new ConcatenationOperation();
 	auto carg1 = new WordOperation("log-");
 	auto carg2 = new EnvironmentVariableReferenceOperation();
 	auto carg3 = new WordOperation(".txt");
