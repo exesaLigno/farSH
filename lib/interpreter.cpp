@@ -4,6 +4,18 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+void Interpreter::Push(const char* value)
+{
+    char* copy = new char[strlen(value) + 1] { 0 };
+    strcpy(copy, value);
+    executionStack.Push(copy);
+}
+
+char* Interpreter::Pop()
+{
+    return executionStack.Pop();
+}
+
 Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_not_main_process)
 {
     child_pid = 0;
@@ -61,18 +73,14 @@ void Interpreter::ExecuteWordOperation(const Operation* operation)
 {
     CAST_OPERATION(WordOperation, word);
 
-    char* word_str = new char[strlen(word->GetText()) + 1] { 0 };
-    strcpy(word_str, word->GetText());
-    executionStack.Push(word_str);
+    Push(word->GetText());
 }
 
 void Interpreter::ExecuteRawStringLiteralOperation(const Operation* operation)
 {
     CAST_OPERATION(RawStringLiteralOperation, raw_string_literal);
 
-    char* raw_string_literal_str = new char[strlen(raw_string_literal->GetText()) + 1] { 0 };
-    strcpy(raw_string_literal_str, raw_string_literal->GetText());
-    executionStack.Push(raw_string_literal_str);
+    Push(raw_string_literal->GetText());
 }
 
 void Interpreter::ExecuteInvocationOperation(const Operation* operation)
@@ -86,7 +94,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
     char* argv[argc + 1];
     argv[argc] = 0;
     for (int idx = argc - 1; idx >= 0; idx--)
-        argv[idx] = executionStack.Pop();
+        argv[idx] = Pop();
 
     pid_t child_pid;
     int wstatus = 0;
@@ -96,7 +104,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
         case ProcessKind::Child:
             execvp(argv[0], argv);
             printf("farsh: \x1b[1;31mUnknown command\x1b[0m: %s\n", argv[0]);
-            abort();
+            exit(0);
 
         case ProcessKind::Parent:
             wait(&wstatus);
@@ -112,17 +120,10 @@ void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* 
 
     Execute(environment_variable_reference->VariableName());
 
-    char* name = executionStack.Pop();
+    char* name = Pop();
     char* value = getenv(name);
 
-    if (value == nullptr)
-        executionStack.Push(new char[1] { 0 });
-    else
-    {
-        char* value_copy = new char[strlen(value) + 1] { 0 };
-        strcpy(value_copy, value);
-        executionStack.Push(value_copy);
-    }
+    Push(value ? value : "");
 }
 
 void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
@@ -140,7 +141,7 @@ void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
 
     for (int idx = composition_elements_count - 1; idx >= 0; idx--)
     {
-        composition_elements[idx] = executionStack.Pop();
+        composition_elements[idx] = Pop();
         final_size += strlen(composition_elements[idx]);
     }
 
@@ -160,7 +161,7 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 
     Execute(file_redirection->Destination());
 
-    char* filename = executionStack.Pop();
+    char* filename = Pop();
 
     FILE* output = fopen(filename, file_redirection->HasFlag(FileRedirectionOperation::F_APPEND) ? "a" : "w");
     delete[] filename;
@@ -196,7 +197,7 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     close(pipe_fd[1]);
 
                     Execute(pipe_redirection->Source());
-                    abort();
+                    exit(0);
 
                 case ProcessKind::Child:
                     close(pipe_fd[1]);
@@ -204,7 +205,7 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     close(pipe_fd[0]);
 
                     Execute(pipe_redirection->Destination());
-                    abort();
+                    exit(0);
             }
 
             break;

@@ -15,6 +15,9 @@ private:
     Stack<char*> executionStack;
     bool mainProcess = true;
 
+    void Push(const char* value);
+    char* Pop();
+
     void ExecuteWordOperation(const Operation* word);
     void ExecuteRawStringLiteralOperation(const Operation* raw_string_literal);
     void ExecuteInvocationOperation(const Operation* invocation);
