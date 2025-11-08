@@ -7,7 +7,7 @@
 
 class FileRedirectionOperation : public Operation
 {
-private:
+public:
     enum Flags
     {
         NONE = 0,
@@ -16,6 +16,7 @@ private:
         F_REDIRECT_STDERR = 1 << 3,
     };
 
+private:
     uint8_t redirectionFlags = 0;
 
 protected:
@@ -23,8 +24,10 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    FileRedirectionOperation();
+    FileRedirectionOperation(bool append = false);
 
     const Operation* Source() const;
     const Operation* Destination() const;
+
+    bool HasFlag(uint8_t flag) const;
 };

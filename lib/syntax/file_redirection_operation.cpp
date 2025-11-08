@@ -5,7 +5,14 @@
 
 void FileRedirectionOperation::DumpNodeTo(FILE* fd) const
 {
-    fprintf(fd, "\tnode_%x [shape=record; label=\"File redirection\"]\n", this);
+    fprintf(fd, "\tnode_%x [shape=record; label=\"{File redirection | { Flags | ", this);
+    if (HasFlag(F_APPEND))
+        fprintf(fd, "F_APPEND ");
+    if (HasFlag(F_REDIRECT_STDOUT))
+        fprintf(fd, "F_REDIRECT_STDOUT");
+    if (HasFlag(F_REDIRECT_STDERR))
+        fprintf(fd, "F_REDIRECT_STDERR");
+    fprintf(fd, " }}\"]\n");
 }
 
 void FileRedirectionOperation::DumpEdgesTo(FILE* fd) const
@@ -14,9 +21,10 @@ void FileRedirectionOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Destination");
 }
 
-FileRedirectionOperation::FileRedirectionOperation() : Operation(OperationKind::FileRedirection)
+FileRedirectionOperation::FileRedirectionOperation(bool append) : Operation(OperationKind::FileRedirection)
 {
-
+    redirectionFlags |= F_REDIRECT_STDOUT;
+    if (append) redirectionFlags |= F_APPEND;
 }
 
 const Operation* FileRedirectionOperation::Source() const
@@ -27,4 +35,9 @@ const Operation* FileRedirectionOperation::Source() const
 const Operation* FileRedirectionOperation::Destination() const
 {
     return children[1];
+}
+
+bool FileRedirectionOperation::HasFlag(uint8_t flag) const
+{
+    return (redirectionFlags & flag) == flag;
 }

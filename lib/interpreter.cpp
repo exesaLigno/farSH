@@ -162,10 +162,13 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 
     char* filename = executionStack.Pop();
 
-    FILE* output = fopen(filename, "w");
+    FILE* output = fopen(filename, file_redirection->HasFlag(FileRedirectionOperation::F_APPEND) ? "a" : "w");
     delete[] filename;
 
-    dup2(fileno(output), STDOUT_FILENO);
+    if (file_redirection->HasFlag(FileRedirectionOperation::F_REDIRECT_STDOUT))
+        dup2(fileno(output), STDOUT_FILENO);
+    if (file_redirection->HasFlag(FileRedirectionOperation::F_REDIRECT_STDERR))
+        dup2(fileno(output), STDERR_FILENO);
 
     Execute(file_redirection->Source());
 

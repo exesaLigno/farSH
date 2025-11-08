@@ -61,7 +61,7 @@ int main(const int argc, const char* const argv[])
 	grep2->AppendChild(grep2_name);
 	grep2->AppendChild(grep2_arg);
 
-	auto redir = new FileRedirectionOperation();
+	auto redir = new FileRedirectionOperation(false);
 	auto composition = new ConcatenationOperation();
 	auto carg1 = new WordOperation("log-");
 	auto carg2 = new EnvironmentVariableReferenceOperation();
