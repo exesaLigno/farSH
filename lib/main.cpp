@@ -14,7 +14,7 @@ int main(const int argc, const char* const argv[])
 	// invocation1->AppendChild(arg1);
 	// auto composition = new ConcatenationOperation();
 	// arg1->AppendChild(composition);
-	// auto environ = new EnvironmentVariableReferenceOperation();
+	// auto environ = new EnvironmentVariableLoadOperation();
 	// composition->AppendChild(environ);
 	// auto word2 = new WordOperation("USERNAME");
 	// environ->AppendChild(word2);
@@ -40,50 +40,40 @@ int main(const int argc, const char* const argv[])
 	// auto word6 = new WordOperation("errors.txt");
 	// arg4->AppendChild(word6);
 
-	auto cat = new InvocationOperation();
-	auto cat_name = new WordOperation("cat");
-	auto cat_file = new WordOperation("Makefile");
+	auto pipe1 = new PipeRedirectionOperation(
+		new InvocationOperation(
+			new WordOperation("cat"),
+			{
+				new WordOperation("Makefile")
+			}
+		),
+		
+		new PipeRedirectionOperation(
+			new InvocationOperation(
+				new WordOperation("grep"),
+				{
+					new WordOperation("OBJECTS")
+				}
+			),
 
-	cat->AppendChild(cat_name);
-	cat->AppendChild(cat_file);
+			new FileRedirectionOperation(
+				new InvocationOperation(
+					new WordOperation("grep"),
+					{
+						new WordOperation("TARGET")
+					}
+				),
 
-	auto grep1 = new InvocationOperation();
-	auto grep1_name = new WordOperation("grep");
-	auto grep1_arg = new WordOperation("OBJECTS");
-
-	grep1->AppendChild(grep1_name);
-	grep1->AppendChild(grep1_arg);
-
-	auto grep2 = new InvocationOperation();
-	auto grep2_name = new WordOperation("grep");
-	auto grep2_arg = new WordOperation("TARGET");
-
-	grep2->AppendChild(grep2_name);
-	grep2->AppendChild(grep2_arg);
-
-	auto redir = new FileRedirectionOperation(false);
-	auto composition = new ConcatenationOperation();
-	auto carg1 = new WordOperation("log-");
-	auto carg2 = new EnvironmentVariableReferenceOperation();
-	auto carg3 = new WordOperation(".txt");
-	auto varname = new WordOperation("USER");
-
-	composition->AppendChild(carg1);
-	composition->AppendChild(carg2);
-	composition->AppendChild(carg3);
-	carg2->AppendChild(varname);
-
-	auto pipe1 = new PipeRedirectionOperation();
-	auto pipe2 = new PipeRedirectionOperation();
-
-	redir->AppendChild(grep2);
-	redir->AppendChild(composition);
-
-	pipe2->AppendChild(grep1);
-	pipe2->AppendChild(redir);
-
-	pipe1->AppendChild(cat);
-	pipe1->AppendChild(pipe2);
+				new ConcatenationOperation({
+					new WordOperation("log-"), 
+					new EnvironmentVariableLoadOperation(
+						new WordOperation("USER")
+					),
+					new WordOperation(".txt") 
+				})
+			)
+		)
+	);
 
 	auto exec = pipe1;
 

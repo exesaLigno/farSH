@@ -3,14 +3,14 @@
 #include "operation_kind.hpp"
 #include "operation.hpp"
 
-class EnvironmentVariableReferenceOperation : public Operation
+class EnvironmentVariableLoadOperation : public Operation
 {
 protected:
     void DumpNodeTo(FILE* fd) const override;
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    EnvironmentVariableReferenceOperation();
+    EnvironmentVariableLoadOperation(Operation* variable_name);
 
     const Operation* VariableName() const;
 };

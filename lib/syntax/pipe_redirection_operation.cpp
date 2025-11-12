@@ -14,9 +14,10 @@ void PipeRedirectionOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Destination");
 }
 
-PipeRedirectionOperation::PipeRedirectionOperation() : Operation(OperationKind::PipeRedirection)
+PipeRedirectionOperation::PipeRedirectionOperation(Operation* source, Operation* destination) : Operation(OperationKind::PipeRedirection)
 {
-
+    AppendChild(source);
+    AppendChild(destination);
 }
 
 const Operation* PipeRedirectionOperation::Source() const

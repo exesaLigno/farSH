@@ -10,7 +10,7 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    ConcatenationOperation();
+    ConcatenationOperation(std::initializer_list<Operation*> components);
 
     size_t ValuesCount() const;
     const Operation* Value(size_t idx) const;

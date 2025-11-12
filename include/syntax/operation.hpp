@@ -20,6 +20,8 @@ protected:
     virtual void DumpEdgesTo(FILE* fd) const;
     void DumpSubgraphTo(FILE* fd) const;
 
+    void AppendChild(Operation* child);
+    
 public:
     ~Operation();
 
@@ -27,7 +29,6 @@ public:
     bool OfKind(OperationKind _kind) const;
     bool OfKind(std::initializer_list<OperationKind> _kinds) const;
 
-    void AppendChild(Operation* child);
     size_t ChildrenCount() const;
     Operation* GetChild(size_t child_idx) const;
 

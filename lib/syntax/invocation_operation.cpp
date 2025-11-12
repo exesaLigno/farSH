@@ -14,9 +14,12 @@ void InvocationOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == ProgramName() ? "ProgramName" : "Argument");
 }
 
-InvocationOperation::InvocationOperation() : Operation(OperationKind::Invocation)
+InvocationOperation::InvocationOperation(Operation* program_name, std::initializer_list<Operation*> arguments) : Operation(OperationKind::Invocation)
 {
+    AppendChild(program_name);
 
+    for (auto argument : arguments)
+        AppendChild(argument);
 }
 
 const Operation* InvocationOperation::ProgramName() const

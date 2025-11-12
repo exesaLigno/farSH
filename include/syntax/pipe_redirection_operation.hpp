@@ -10,7 +10,7 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    PipeRedirectionOperation();
+    PipeRedirectionOperation(Operation* source, Operation* destination);
 
     const Operation* Source() const;
     const Operation* Destination() const;

@@ -14,9 +14,10 @@ void ConcatenationOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x\n", this, children[idx]);
 }
 
-ConcatenationOperation::ConcatenationOperation() : Operation(OperationKind::Concatenation)
+ConcatenationOperation::ConcatenationOperation(std::initializer_list<Operation*> components) : Operation(OperationKind::Concatenation)
 {
-
+    for (auto component : components)
+        AppendChild(component);
 }
 
 size_t ConcatenationOperation::ValuesCount() const

@@ -24,7 +24,7 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    FileRedirectionOperation(bool append = false);
+    FileRedirectionOperation(Operation* source, Operation* destination);
 
     const Operation* Source() const;
     const Operation* Destination() const;

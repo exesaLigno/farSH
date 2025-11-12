@@ -116,7 +116,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 
 void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* operation)
 {
-    CAST_OPERATION(EnvironmentVariableReferenceOperation, environment_variable_reference);
+    CAST_OPERATION(EnvironmentVariableLoadOperation, environment_variable_reference);
 
     Execute(environment_variable_reference->VariableName());
 

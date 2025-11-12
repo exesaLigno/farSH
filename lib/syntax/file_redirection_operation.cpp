@@ -21,10 +21,13 @@ void FileRedirectionOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Destination");
 }
 
-FileRedirectionOperation::FileRedirectionOperation(bool append) : Operation(OperationKind::FileRedirection)
+FileRedirectionOperation::FileRedirectionOperation(Operation* source, Operation* destination) : Operation(OperationKind::FileRedirection)
 {
+    AppendChild(source);
+    AppendChild(destination);
+
     redirectionFlags |= F_REDIRECT_STDOUT;
-    if (append) redirectionFlags |= F_APPEND;
+    // if (append) redirectionFlags |= F_APPEND;
 }
 
 const Operation* FileRedirectionOperation::Source() const
