@@ -1,6 +1,7 @@
 #include "repl.hpp"
 #include "syntax.hpp"
 #include "interpreter.hpp"
+#include "syntax_parser.hpp"
 
 int main(const int argc, const char* const argv[])
 {
@@ -40,49 +41,61 @@ int main(const int argc, const char* const argv[])
 	// auto word6 = new WordOperation("errors.txt");
 	// arg4->AppendChild(word6);
 
-	auto pipe1 = new PipeRedirectionOperation(
-		new InvocationOperation(
-			new WordOperation("cat"),
-			{
-				new WordOperation("Makefile")
-			}
-		),
-		
-		new PipeRedirectionOperation(
-			new InvocationOperation(
-				new WordOperation("grep"),
-				{
-					new WordOperation("OBJECTS")
-				}
-			),
+	
 
-			new FileRedirectionOperation(
-				new InvocationOperation(
-					new WordOperation("grep"),
-					{
-						new WordOperation("TARGET")
-					}
-				),
+	// auto pipe1 = new PipeRedirectionOperation(
+	// 	new InvocationOperation(
+	// 		new WordOperation("cat"),
+	// 		{
+	// 			new WordOperation("Makefile")
+	// 		}
+	// 	),
 
-				new ConcatenationOperation({
-					new WordOperation("log-"), 
-					new EnvironmentVariableLoadOperation(
-						new WordOperation("USER")
-					),
-					new WordOperation(".txt") 
-				})
-			)
-		)
-	);
+	// 	new PipeRedirectionOperation(
+	// 		new InvocationOperation(
+	// 			new WordOperation("grep"),
+	// 			{
+	// 				new WordOperation("OBJECTS")
+	// 			}
+	// 		),
 
-	auto exec = pipe1;
+	// 		new FileRedirectionOperation(
+	// 			new InvocationOperation(
+	// 				new WordOperation("grep"),
+	// 				{
+	// 					new WordOperation("TARGET")
+	// 				}
+	// 			),
+
+	// 			new ConcatenationOperation({
+	// 				new WordOperation("log-"), 
+	// 				new EnvironmentVariableLoadOperation(
+	// 					new WordOperation("USER")
+	// 				),
+	// 				new WordOperation(".txt") 
+	// 			})
+	// 		)
+	// 	)
+	// );
+
+	// auto exec = pipe1;
+
+	// FILE* fd = fopen("ast.dot", "w");
+	// exec->DumpTo(fd);
+	// fclose(fd);
+
+	// auto i = Interpreter();
+	// i.Execute(exec);
+
+	auto p = Parser();
 
 	FILE* fd = fopen("ast.dot", "w");
-	exec->DumpTo(fd);
-	fclose(fd);
-
+	auto ast = p.Parse("cat Makefile | grep CXX | grep += > test.txt");
 	auto i = Interpreter();
-	i.Execute(exec);
+	i.Execute(ast);
+	ast->DumpTo(fd);
+	delete ast;
+	fclose(fd);
 
 	// auto f = REPL();
 	// f.Run();
