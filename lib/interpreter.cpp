@@ -63,29 +63,19 @@ void Interpreter::Execute(const Operation* operation)
 }
 
 
-#define CAST_OPERATION(TYPE, destination) \
-    const TYPE* destination = dynamic_cast<const TYPE*>(operation); \
-    if (destination == nullptr) \
-        throw std::runtime_error("Runtime error: Can't cast Operation to " #TYPE " type.");
-
-
 void Interpreter::ExecuteWordOperation(const Operation* operation)
 {
-    CAST_OPERATION(WordOperation, word);
-
-    Push(word->GetText());
+    Push(operation->As<WordOperation>()->GetText());
 }
 
 void Interpreter::ExecuteRawStringLiteralOperation(const Operation* operation)
 {
-    CAST_OPERATION(RawStringLiteralOperation, raw_string_literal);
-
-    Push(raw_string_literal->GetText());
+    Push(operation->As<RawStringLiteralOperation>()->GetText());
 }
 
 void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 {
-    CAST_OPERATION(InvocationOperation, invocation);
+    auto invocation = operation->As<InvocationOperation>();
 
     for (int idx = 0; idx < invocation->ChildrenCount(); idx++)
         Execute(invocation->GetChild(idx));
@@ -116,9 +106,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 
 void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* operation)
 {
-    CAST_OPERATION(EnvironmentVariableLoadOperation, environment_variable_reference);
-
-    Execute(environment_variable_reference->VariableName());
+    Execute(operation->As<EnvironmentVariableLoadOperation>()->VariableName());
 
     char* name = Pop();
     char* value = getenv(name);
@@ -128,7 +116,7 @@ void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* 
 
 void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
 {
-    CAST_OPERATION(ConcatenationOperation, composition);
+    auto composition = operation->As<ConcatenationOperation>();
 
     for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
         Execute(composition->Value(idx));
@@ -157,7 +145,7 @@ void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
 
 void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 {
-    CAST_OPERATION(FileRedirectionOperation, file_redirection);
+    auto file_redirection = operation->As<FileRedirectionOperation>();
 
     Execute(file_redirection->Destination());
 
@@ -178,7 +166,7 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 
 void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
 {
-    CAST_OPERATION(PipeRedirectionOperation, pipe_redirection);
+    auto pipe_redirection = operation->As<PipeRedirectionOperation>();
 
     pid_t child_pid;
     int wstatus = 0;
@@ -214,5 +202,3 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
             wait(&wstatus);
     }
 }
-
-#undef CAST_OPERATION

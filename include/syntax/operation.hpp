@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <cstdlib>
 #include <cstdio>
+#include <stdexcept>
 
 #include "operation_kind.hpp"
 
@@ -31,8 +32,18 @@ public:
 
     size_t ChildrenCount() const;
     Operation* GetChild(size_t child_idx) const;
-
     Operation* GetParent() const;
 
     void DumpTo(FILE* fd) const;
+
+    template <typename T>
+    const T* As() const
+    {
+        const T* result = dynamic_cast<const T*>(this);
+
+        if (not result)
+            throw std::runtime_error("Can't cast operation!");
+
+        return result;
+    }
 };
