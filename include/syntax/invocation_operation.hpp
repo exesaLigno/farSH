@@ -10,7 +10,10 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
+    InvocationOperation(Operation* program_name);
     InvocationOperation(Operation* program_name, std::initializer_list<Operation*> arguments);
+
+    void AddArgument(Operation* argument);
 
     const Operation* ProgramName() const;
     size_t ArgumentsCount() const;
