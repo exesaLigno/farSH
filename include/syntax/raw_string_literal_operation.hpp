@@ -9,9 +9,10 @@ protected:
     void DumpNodeTo(FILE* fd) const override;
     void DumpEdgesTo(FILE* fd) const override;
 
-    const char* text = nullptr;
+    char* text = nullptr;
 
 public:
     RawStringLiteralOperation(const char* _text);
+    ~RawStringLiteralOperation() override;
     const char* GetText() const;
 };

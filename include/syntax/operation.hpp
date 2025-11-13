@@ -24,7 +24,7 @@ protected:
     void AppendChild(Operation* child);
     
 public:
-    ~Operation();
+    virtual ~Operation();
 
     OperationKind Kind() const;
     bool OfKind(OperationKind _kind) const;

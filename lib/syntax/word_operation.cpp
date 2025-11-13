@@ -1,5 +1,7 @@
 #include "syntax/word_operation.hpp"
 
+#include <cstring>
+
 #include "syntax/operation_kind.hpp"
 #include "syntax/operation.hpp"
 
@@ -16,10 +18,16 @@ void WordOperation::DumpEdgesTo(FILE* fd) const
 
 WordOperation::WordOperation(const char* _text) : Operation(OperationKind::Word)
 {
-    text = _text;
+    text = new char[strlen(_text) + 1] { 0 };
+    strcpy(text, _text);
 }
 
 const char* WordOperation::GetText() const
 {
     return text;
+}
+
+WordOperation::~WordOperation()
+{
+    delete[] text;
 }

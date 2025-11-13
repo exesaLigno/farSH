@@ -1,5 +1,7 @@
 #include "syntax/raw_string_literal_operation.hpp"
 
+#include <cstring>
+
 #include "syntax/operation_kind.hpp"
 #include "syntax/operation.hpp"
 
@@ -16,10 +18,16 @@ void RawStringLiteralOperation::DumpEdgesTo(FILE* fd) const
 
 RawStringLiteralOperation::RawStringLiteralOperation(const char* _text) : Operation(OperationKind::RawStringLiteral)
 {
-    text = _text;
+    text = new char[strlen(_text) + 1] { 0 };
+    strcpy(text, _text);
 }
 
 const char* RawStringLiteralOperation::GetText() const
 {
     return text;
+}
+
+RawStringLiteralOperation::~RawStringLiteralOperation()
+{
+    delete[] text;
 }
