@@ -2,5 +2,9 @@
 !.vscode/launch.json
 !.vscode/tasks.json
 *.out
+*.o
+*.d
 build/*
 farsh
+*.dot
+*.txt
