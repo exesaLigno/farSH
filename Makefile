@@ -3,6 +3,7 @@ HEADER_DIR = include
 BUILD_DIR = build
 OBJECT_DIR = $(BUILD_DIR)/obj
 EXECUTABLES_DIR = $(BUILD_DIR)/executable
+EXECUTABLE_NAME = farsh
 
 CXX = g++
 CXX_STANDARD = c++2a
@@ -17,10 +18,30 @@ else
 	CXXFLAGS += $(CXXFLAGS_RELEASE)
 endif
 
+ifdef ASAN
+	CXXFLAGS += -fsanitize=address
+	LDFLAGS += -fsanitize=address
+endif
+
+ifdef UBSAN
+	CXXFLAGS += -fsanitize=undefined
+	LDFLAGS += -fsanitize=undefined
+endif
+
 SOURCES = $(shell find $(SRC_DIR) -name '*.cpp')
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(OBJECT_DIR)/%.o)
 
-TARGET = $(EXECUTABLES_DIR)/farsh
+TARGET = $(EXECUTABLES_DIR)/$(EXECUTABLE_NAME)
+
+ALL: $(TARGET)
+
+.PHONY: install
+install: $(TARGET)
+	cp $(EXECUTABLES_DIR)/$(EXECUTABLE_NAME) /usr/bin/$(EXECUTABLE_NAME)
+
+.PHONY: uninstall
+uninstall:
+	rm /usr/bin/$(EXECUTABLE_NAME)
 
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(dir $@)
