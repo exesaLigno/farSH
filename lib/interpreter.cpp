@@ -68,11 +68,6 @@ void Interpreter::ExecuteWordOperation(const Operation* operation)
     Push(operation->As<WordOperation>()->GetText());
 }
 
-void Interpreter::ExecuteRawStringLiteralOperation(const Operation* operation)
-{
-    Push(operation->As<RawStringLiteralOperation>()->GetText());
-}
-
 void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 {
     auto invocation = operation->As<InvocationOperation>();

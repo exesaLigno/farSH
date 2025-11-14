@@ -13,5 +13,4 @@
 #include "syntax/invocation_operation.hpp"
 #include "syntax/pipe_redirection_operation.hpp"
 #include "syntax/environment_variable_load_operation.hpp"
-#include "syntax/raw_string_literal_operation.hpp"
 #include "syntax/word_operation.hpp"
