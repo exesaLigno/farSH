@@ -92,7 +92,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
             exit(0);
 
         case ProcessKind::Parent:
-            wait(&wstatus);
+            waitpid(child_pid, &wstatus, 0);
     }
 
     for (int idx = 0; idx < argc; idx++)
@@ -163,16 +163,17 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
 {
     auto pipe_redirection = operation->As<PipeRedirectionOperation>();
 
-    pid_t child_pid;
+    pid_t child_pid_external;
+    pid_t child_pid_internal;
     int wstatus = 0;
 
-    switch (Fork(child_pid))
+    switch (Fork(child_pid_external))
     {
         case ProcessKind::Child:
             int pipe_fd[2];
             pipe(pipe_fd);
 
-            switch (Fork(child_pid))
+            switch (Fork(child_pid_internal))
             {
                 case ProcessKind::Parent:
                     close(pipe_fd[0]);
@@ -180,6 +181,8 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     close(pipe_fd[1]);
 
                     Execute(pipe_redirection->Source());
+                    waitpid(child_pid_internal, &wstatus, 0);
+
                     exit(0);
 
                 case ProcessKind::Child:
@@ -194,6 +197,6 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
             break;
 
         case ProcessKind::Parent:
-            wait(&wstatus);
+            waitpid(child_pid_external, &wstatus, 0);
     }
 }
