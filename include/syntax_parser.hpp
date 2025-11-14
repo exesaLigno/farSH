@@ -14,6 +14,8 @@ public:
     Operation* ParseInvocation(const char* string, int& idx);
     Operation* ParseConcatenation(const char* string, int& idx);
     Operation* ParseEnvironmentVariableLoad(const char* string, int& idx);
+    Operation* ParseEnvironmentVariableNameOrSubshell(const char* string, int& idx);
+    Operation* ParseEnvironmentVariableName(const char* string, int& idx);
+    Operation* ParseEscapedEnvironmentVariableName(const char* string, int& idx);
     Operation* ParseWord(const char* string, int& idx);
-    Operation* ParseRawString(const char* string, int& idx);
 };

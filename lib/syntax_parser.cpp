@@ -8,6 +8,7 @@ inline bool IsWordTerminator(char symbol)
     switch (symbol)
     {
         case '&':
+        case '$':
         case '|':
         case ';':
         case '>':
@@ -20,6 +21,16 @@ inline bool IsWordTerminator(char symbol)
         default:
             return false;
     }
+}
+
+inline bool IsVariableNameSymbol(char symbol)
+{
+    return (
+        (symbol >= 'a' and symbol <= 'z') or
+        (symbol >= 'A' and symbol <= 'Z') or
+        (symbol >= '0' and symbol <= '9') or
+        symbol == '_'
+    );
 }
 
 Operation* Parser::Parse(const char* string)
@@ -92,7 +103,20 @@ Operation* Parser::ParseInvocation(const char* string, int& idx)
 
 Operation* Parser::ParseConcatenation(const char* string, int& idx)
 {
-    return ParseEnvironmentVariableLoad(string, idx);
+    SkipSpaces(string, idx);
+
+    auto first = ParseEnvironmentVariableLoad(string, idx);
+
+    if (IsWordTerminator(string[idx]) and string[idx] != '$')
+        return first;
+
+    auto concatenation = new ConcatenationOperation();
+    concatenation->AddValue(first);
+
+    while (not IsWordTerminator(string[idx]) or string[idx] == '$')
+        concatenation->AddValue(ParseEnvironmentVariableLoad(string, idx));
+
+    return concatenation;
 }
 
 Operation* Parser::ParseEnvironmentVariableLoad(const char* string, int& idx)
@@ -102,11 +126,55 @@ Operation* Parser::ParseEnvironmentVariableLoad(const char* string, int& idx)
     if (string[idx] == '$')
     {
         idx++;
-        auto variable_name = ParseWord(string, idx); // TODO: replace with method to parse variable names
+        auto variable_name = ParseEnvironmentVariableNameOrSubshell(string, idx); // TODO: replace with method to parse variable names
         return new EnvironmentVariableLoadOperation(variable_name);
     }
 
     return ParseWord(string, idx);
+}
+
+Operation* Parser::ParseEnvironmentVariableNameOrSubshell(const char* string, int& idx)
+{
+    if (string[idx] == '{')
+        return ParseEscapedEnvironmentVariableName(string, idx);
+
+    else if (string[idx] == '(')
+        throw std::runtime_error("N/I");
+
+    else
+        return ParseEnvironmentVariableName(string, idx);
+}
+
+Operation* Parser::ParseEnvironmentVariableName(const char* string, int& idx)
+{
+    int word_start_idx = idx;
+
+    while (IsVariableNameSymbol(string[idx]))
+        idx++;
+
+    char buffer[idx - word_start_idx + 1];
+    strncpy(buffer, string + word_start_idx, idx - word_start_idx);
+    buffer[idx - word_start_idx] = 0;
+
+    return new WordOperation(buffer);
+}
+
+Operation* Parser::ParseEscapedEnvironmentVariableName(const char* string, int& idx)
+{
+    idx++;
+
+    int word_start_idx = idx;
+
+    while (string[idx] != '}')
+        idx++;
+
+    char buffer[idx - word_start_idx + 1];
+    strncpy(buffer, string + word_start_idx, idx - word_start_idx);
+    buffer[idx - word_start_idx] = 0;
+
+    idx++;
+
+    return new WordOperation(buffer);
 }
 
 Operation* Parser::ParseWord(const char* string, int& idx)
@@ -121,8 +189,6 @@ Operation* Parser::ParseWord(const char* string, int& idx)
     char buffer[idx - word_start_idx + 1];
     strncpy(buffer, string + word_start_idx, idx - word_start_idx);
     buffer[idx - word_start_idx] = 0;
-
-    SkipSpaces(string, idx);
 
     return new WordOperation(buffer);
 }
