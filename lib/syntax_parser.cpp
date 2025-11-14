@@ -97,6 +97,15 @@ Operation* Parser::ParseConcatenation(const char* string, int& idx)
 
 Operation* Parser::ParseEnvironmentVariableLoad(const char* string, int& idx)
 {
+    SkipSpaces(string, idx);
+
+    if (string[idx] == '$')
+    {
+        idx++;
+        auto variable_name = ParseWord(string, idx); // TODO: replace with method to parse variable names
+        return new EnvironmentVariableLoadOperation(variable_name);
+    }
+
     return ParseWord(string, idx);
 }
 
