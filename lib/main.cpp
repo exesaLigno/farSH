@@ -90,7 +90,7 @@ int main(const int argc, const char* const argv[])
 	auto p = Parser();
 
 	FILE* fd = fopen("ast.dot", "w");
-	auto ast = p.Parse("cat Makefile | grep CXX | grep += > test.txt");
+	auto ast = p.Parse("cat Makefile|grep CXX|grep += >test.txt");
 	auto i = Interpreter();
 	i.Execute(ast);
 	ast->DumpTo(fd);

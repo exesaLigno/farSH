@@ -3,6 +3,25 @@
 #include <cassert>
 #include <cstring>
 
+inline bool IsWordTerminator(char symbol)
+{
+    switch (symbol)
+    {
+        case '&':
+        case '|':
+        case ';':
+        case '>':
+        case '<':
+        case ' ':
+        case '\n':
+        case '\t':
+        case '\0':
+            return true;
+        default:
+            return false;
+    }
+}
+
 Operation* Parser::Parse(const char* string)
 {
     int idx = 0;
@@ -87,7 +106,7 @@ Operation* Parser::ParseWord(const char* string, int& idx)
 
     int word_start_idx = idx;
 
-    while (string[idx] != ' ' and string[idx] != '\0')
+    while (not IsWordTerminator(string[idx]))
         idx++;
 
     char buffer[idx - word_start_idx + 1];
@@ -97,9 +116,4 @@ Operation* Parser::ParseWord(const char* string, int& idx)
     SkipSpaces(string, idx);
 
     return new WordOperation(buffer);
-}
-
-Operation* Parser::ParseRawString(const char* string, int& idx)
-{
-    throw std::runtime_error("N/I");
 }
