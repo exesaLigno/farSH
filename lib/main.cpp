@@ -87,18 +87,18 @@ int main(const int argc, const char* const argv[])
 	// auto i = Interpreter();
 	// i.Execute(exec);
 
-	auto p = Parser();
+	// auto p = Parser();
 
-	FILE* fd = fopen("ast.dot", "w");
-	auto ast = p.Parse("cat Makefile|grep CXX|grep += > $USER");
-	auto i = Interpreter();
-	i.Execute(ast);
-	ast->DumpTo(fd);
-	delete ast;
-	fclose(fd);
+	// FILE* fd = fopen("ast.dot", "w");
+	// auto ast = p.Parse("cat Makefile|grep CXX|grep += > log-$USER.txt");
+	// auto i = Interpreter();
+	// i.Execute(ast);
+	// ast->DumpTo(fd);
+	// delete ast;
+	// fclose(fd);
 
-	// auto f = REPL();
-	// f.Run();
+	auto f = REPL();
+	f.Run();
 
-	// return 0;
+	return 0;
 }

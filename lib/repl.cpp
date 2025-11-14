@@ -113,8 +113,19 @@ void REPL::Run()
 
 int REPL::ExecuteCommand()
 {
-    printf("Executing command: '");
-    inputBuffer.WriteTo();
-    printf("'...\n");
+    if (inputBuffer.Length() == 0)
+        return 0;
+    char* string = inputBuffer.AsUnicodeString().ToString();
+    auto ast = parser.Parse(string);
+
+    FILE* fd = fopen("ast.dot", "w");
+    ast->DumpTo(fd);
+    fclose(fd);
+
+    interpreter.Execute(ast);
+
+    delete ast;
+    delete[] string;
+
     return 0;
 }

@@ -11,6 +11,8 @@
 #include "greeting.hpp"
 #include "tty.hpp"
 #include "unicode/buffer.hpp"
+#include "syntax_parser.hpp"
+#include "interpreter.hpp"
 
 class REPL
 {
@@ -20,6 +22,9 @@ private:
     UnicodeBuffer inputBuffer;
 
     bool rudeMode = false;
+
+    Parser parser;
+    Interpreter interpreter;
 
     static uint64_t RollInfinitySidedDice();
     uint64_t infinitySidedDiceRollResult = RollInfinitySidedDice();
