@@ -101,6 +101,9 @@ void REPL::Run()
                     inputBuffer.Prepend("sudo ");
                     break;
 
+                case UnicodeSymbol::Command::HorizontalTab:
+                    break;
+
                 default:
                     symbol.DebugWriteTo(stderr);
                     break;
@@ -118,7 +121,7 @@ int REPL::ExecuteCommand()
     char* string = inputBuffer.AsUnicodeString().ToString();
     auto ast = parser.Parse(string);
 
-    FILE* fd = fopen("ast.dot", "w");
+    FILE* fd = fopen("/tmp/farsh/last_command_ast.dot", "w");
     ast->DumpTo(fd);
     fclose(fd);
 
