@@ -52,17 +52,23 @@ Operation* Parser::ParsePipeRedirection(const char* string, int& idx)
     auto lhs = ParseFileRedirection(string, idx);
     SkipSpaces(string, idx);
 
-    if (string[idx] == '|')
+    if (string[idx] != '|')
+        return lhs;
+
+    auto pipe_redirection = new PipeRedirectionOperation();
+    pipe_redirection->AddOperand(lhs);
+
+    while (string[idx] == '|')
     {
         idx++;
         SkipSpaces(string, idx);
-        auto rhs = ParsePipeRedirection(string, idx);
+        auto next = ParseFileRedirection(string, idx);
         SkipSpaces(string, idx);
 
-        return new PipeRedirectionOperation(lhs, rhs);
+        pipe_redirection->AddOperand(next);
     }
 
-    return lhs;
+    return pipe_redirection;
 }
 
 Operation* Parser::ParseFileRedirection(const char* string, int& idx)

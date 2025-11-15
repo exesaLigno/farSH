@@ -10,8 +10,11 @@ protected:
     void DumpEdgesTo(FILE* fd) const override;
 
 public:
-    PipeRedirectionOperation(Operation* source, Operation* destination);
+    PipeRedirectionOperation();
+    PipeRedirectionOperation(std::initializer_list<Operation*> operands);
 
-    const Operation* Source() const;
-    const Operation* Destination() const;
+    void AddOperand(Operation* operand);
+
+    int OperandsCount() const;
+    const Operation* GetOperand(int idx) const;
 };

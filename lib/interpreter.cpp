@@ -177,39 +177,42 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
 {
     auto pipe_redirection = operation->As<PipeRedirectionOperation>();
 
-    pid_t child_pid_external;
-    pid_t child_pid_internal;
-    int wstatus = 0;
+    int pipes_count = pipe_redirection->OperandsCount() - 1;
 
-    switch (Fork(child_pid_external))
+    int pipes[pipes_count][2];
+
+    for (int pipe_idx = 0; pipe_idx < pipes_count; pipe_idx++)
+        pipe(pipes[pipe_idx]);
+
+    for (int idx = 0; idx < pipe_redirection->OperandsCount(); idx++)
     {
-        case ProcessKind::Child:
-            int pipe_fd[2];
-            pipe(pipe_fd);
+        pid_t child_pid;
+        switch (Fork(child_pid))
+        {
+            case ProcessKind::Child:
+                if (idx < pipe_redirection->OperandsCount() - 1)
+                {
+                    close(pipes[idx][0]);
+                    dup2(pipes[idx][1], STDOUT_FILENO);
+                    close(pipes[idx][1]);
+                }
 
-            switch (Fork(child_pid_internal))
-            {
-                case ProcessKind::Parent:
-                    close(pipe_fd[0]);
-                    dup2(pipe_fd[1], STDOUT_FILENO);
-                    close(pipe_fd[1]);
+                if (idx > 0)
+                {
+                    close(pipes[idx - 1][1]);
+                    dup2(pipes[idx - 1][0], STDIN_FILENO);
+                    close(pipes[idx - 1][0]);
+                }
 
-                    CheckAndExecute(pipe_redirection->Source());
-                    WaitAll();
-                    exit(0);
+                Execute(pipe_redirection->GetOperand(idx));
 
-                case ProcessKind::Child:
-                    close(pipe_fd[1]);
-                    dup2(pipe_fd[0], STDIN_FILENO);
-                    close(pipe_fd[0]);
-
-                    CheckAndExecute(pipe_redirection->Destination());
-                    exit(0);
-            }
-
-            break;
-
-        case ProcessKind::Parent:
-            WaitAll();
+            case ProcessKind::Parent:
+                if (idx < pipe_redirection->OperandsCount() - 1)
+                    close(pipes[idx][1]);
+                if (idx > 0)
+                    close(pipes[idx - 1][0]);
+        }
     }
+
+    WaitAll();
 }
