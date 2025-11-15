@@ -18,6 +18,8 @@ private:
     void Push(const char* value);
     char* Pop();
 
+    void CheckAndExecute(const Operation* operation);
+
     void ExecuteWordOperation(const Operation* word);
     void ExecuteRawStringLiteralOperation(const Operation* raw_string_literal);
     void ExecuteInvocationOperation(const Operation* invocation);
@@ -27,6 +29,7 @@ private:
     void ExecutePipeRedirectionOperation(const Operation* pipe_redirection);
 
     Interpreter::ProcessKind Fork(pid_t& child_pid, bool just_ensure_not_main_process = false);
+    void WaitAll();
 
 public:
     void Execute(const Operation* operation);

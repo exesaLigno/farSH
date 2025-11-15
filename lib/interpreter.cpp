@@ -35,7 +35,21 @@ Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_no
         return ProcessKind::Parent;
 }
 
+void Interpreter::WaitAll()
+{
+    pid_t child_pid = 0;
+    int wstatus;
+
+    while ((child_pid = wait(&wstatus)) > 0);
+}
+
 void Interpreter::Execute(const Operation* operation)
+{
+    CheckAndExecute(operation);
+    WaitAll();
+}
+
+void Interpreter::CheckAndExecute(const Operation* operation)
 {
     switch (operation->Kind())
     {
@@ -73,7 +87,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
     auto invocation = operation->As<InvocationOperation>();
 
     for (int idx = 0; idx < invocation->ChildrenCount(); idx++)
-        Execute(invocation->GetChild(idx));
+        CheckAndExecute(invocation->GetChild(idx));
 
     const int argc = invocation->ChildrenCount();
     char* argv[argc + 1];
@@ -92,7 +106,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
             exit(0);
 
         case ProcessKind::Parent:
-            waitpid(child_pid, &wstatus, 0);
+            WaitAll();
     }
 
     for (int idx = 0; idx < argc; idx++)
@@ -101,7 +115,7 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
 
 void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* operation)
 {
-    Execute(operation->As<EnvironmentVariableLoadOperation>()->VariableName());
+    CheckAndExecute(operation->As<EnvironmentVariableLoadOperation>()->VariableName());
 
     char* name = Pop();
     char* value = getenv(name);
@@ -114,7 +128,7 @@ void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
     auto composition = operation->As<ConcatenationOperation>();
 
     for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
-        Execute(composition->Value(idx));
+        CheckAndExecute(composition->Value(idx));
 
     const int composition_elements_count = composition->ChildrenCount();
     char* composition_elements[composition_elements_count + 1];
@@ -142,7 +156,7 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
 {
     auto file_redirection = operation->As<FileRedirectionOperation>();
 
-    Execute(file_redirection->Destination());
+    CheckAndExecute(file_redirection->Destination());
 
     char* filename = Pop();
 
@@ -154,7 +168,7 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
     if (file_redirection->HasFlag(FileRedirectionOperation::F_REDIRECT_STDERR))
         dup2(fileno(output), STDERR_FILENO);
 
-    Execute(file_redirection->Source());
+    CheckAndExecute(file_redirection->Source());
 
     fclose(output);
 }
@@ -180,9 +194,8 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     dup2(pipe_fd[1], STDOUT_FILENO);
                     close(pipe_fd[1]);
 
-                    Execute(pipe_redirection->Source());
-                    waitpid(child_pid_internal, &wstatus, 0);
-
+                    CheckAndExecute(pipe_redirection->Source());
+                    WaitAll();
                     exit(0);
 
                 case ProcessKind::Child:
@@ -190,13 +203,13 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     dup2(pipe_fd[0], STDIN_FILENO);
                     close(pipe_fd[0]);
 
-                    Execute(pipe_redirection->Destination());
+                    CheckAndExecute(pipe_redirection->Destination());
                     exit(0);
             }
 
             break;
 
         case ProcessKind::Parent:
-            waitpid(child_pid_external, &wstatus, 0);
+            WaitAll();
     }
 }
