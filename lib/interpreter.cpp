@@ -95,6 +95,12 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
     for (int idx = argc - 1; idx >= 0; idx--)
         argv[idx] = Pop();
 
+    if (!strcmp(argv[0], "cd"))
+    {
+        chdir(argv[1]);
+        return;
+    }
+
     pid_t child_pid;
     int wstatus = 0;
 
@@ -119,6 +125,8 @@ void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* 
 
     char* name = Pop();
     char* value = getenv(name);
+
+    delete[] name;
 
     Push(value ? value : "");
 }
