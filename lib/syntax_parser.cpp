@@ -3,24 +3,32 @@
 #include <cassert>
 #include <cstring>
 
-inline bool IsWordTerminator(char symbol)
+inline bool IsWordTerminator(char symbol, bool is_quoted_string)
 {
     switch (symbol)
     {
+        case '"':
+            return is_quoted_string;
+        case ' ':
+        case '\n':
+        case '\t':
         case '&':
-        case '$':
         case '|':
         case ';':
         case '>':
         case '<':
-        case ' ':
-        case '\n':
-        case '\t':
+            return not is_quoted_string;
         case '\0':
+        case '$':
             return true;
         default:
             return false;
     }
+}
+
+inline bool IsConcatenationTerminator(char symbol, bool is_quoted_string)
+{
+    return IsWordTerminator(symbol, is_quoted_string) and symbol != '$';
 }
 
 inline bool IsVariableNameSymbol(char symbol)
@@ -31,6 +39,23 @@ inline bool IsVariableNameSymbol(char symbol)
         (symbol >= '0' and symbol <= '9') or
         symbol == '_'
     );
+}
+
+int Parser::CalculateLengthUntil(const char* string, const int start_idx, const std::function<bool(char)> is_allowed, const bool use_escaping)
+{
+    bool escaped = false;
+    int length = 0;
+
+    while ((escaped or is_allowed(string[start_idx + length])) and string[start_idx + length] != '\0')
+    {
+        if (use_escaping and string[start_idx + length] == '\\')
+            escaped = true;
+        else if (use_escaping)
+            escaped = false;
+        length++;
+    }
+
+    return length;
 }
 
 Operation* Parser::Parse(const char* string)
@@ -139,90 +164,93 @@ Operation* Parser::ParseConcatenation(const char* string, int& idx)
 {
     SkipSpaces(string, idx);
 
-    auto first = ParseEnvironmentVariableLoad(string, idx);
+    bool is_quoted_string = string[idx] == '"';
 
-    if (IsWordTerminator(string[idx]) and string[idx] != '$')
+    if (is_quoted_string)
+        idx++;
+
+    auto first = ParseEnvironmentVariableLoad(string, idx, is_quoted_string);
+
+    if (IsConcatenationTerminator(string[idx], is_quoted_string))
+    {
+        if (is_quoted_string)
+            idx++;
         return first;
+    }
 
     auto concatenation = new ConcatenationOperation();
     concatenation->AddValue(first);
 
-    while (not IsWordTerminator(string[idx]) or string[idx] == '$')
-        concatenation->AddValue(ParseEnvironmentVariableLoad(string, idx));
+    while (not IsConcatenationTerminator(string[idx], is_quoted_string))
+        concatenation->AddValue(ParseEnvironmentVariableLoad(string, idx, is_quoted_string));
+
+    if (is_quoted_string)
+        idx++;
 
     return concatenation;
 }
 
-Operation* Parser::ParseEnvironmentVariableLoad(const char* string, int& idx)
+Operation* Parser::ParseEnvironmentVariableLoad(const char* string, int& idx, bool is_quoted_string)
 {
-    SkipSpaces(string, idx);
-
     if (string[idx] == '$')
     {
         idx++;
-        auto variable_name = ParseEnvironmentVariableNameOrSubshell(string, idx); // TODO: replace with method to parse variable names
+        auto variable_name = ParseEnvironmentVariableNameOrSubshell(string, idx, is_quoted_string);
         return new EnvironmentVariableLoadOperation(variable_name);
     }
 
-    return ParseWord(string, idx);
+    return ParseWord(string, idx, is_quoted_string);
 }
 
-Operation* Parser::ParseEnvironmentVariableNameOrSubshell(const char* string, int& idx)
+Operation* Parser::ParseEnvironmentVariableNameOrSubshell(const char* string, int& idx, bool is_quoted_string)
 {
     if (string[idx] == '{')
-        return ParseEscapedEnvironmentVariableName(string, idx);
+        return ParseEscapedEnvironmentVariableName(string, idx, is_quoted_string);
 
     else if (string[idx] == '(')
         throw std::runtime_error("N/I");
 
     else
-        return ParseEnvironmentVariableName(string, idx);
+        return ParseEnvironmentVariableName(string, idx, is_quoted_string);
 }
 
-Operation* Parser::ParseEnvironmentVariableName(const char* string, int& idx)
+Operation* Parser::ParseEnvironmentVariableName(const char* string, int& idx, bool is_quoted_string)
 {
-    int word_start_idx = idx;
+    int length = CalculateLengthUntil(string, idx, IsVariableNameSymbol, false);
 
-    while (IsVariableNameSymbol(string[idx]))
-        idx++;
+    char buffer[length + 1];
+    strncpy(buffer, string + idx, length);
+    buffer[length] = 0;
 
-    char buffer[idx - word_start_idx + 1];
-    strncpy(buffer, string + word_start_idx, idx - word_start_idx);
-    buffer[idx - word_start_idx] = 0;
+    idx += length;
 
     return new WordOperation(buffer);
 }
 
-Operation* Parser::ParseEscapedEnvironmentVariableName(const char* string, int& idx)
+Operation* Parser::ParseEscapedEnvironmentVariableName(const char* string, int& idx, bool is_quoted_string)
 {
     idx++;
 
-    int word_start_idx = idx;
+    int length = CalculateLengthUntil(string, idx, [](char symbol) { return symbol != '}' and IsVariableNameSymbol(symbol); }, false);
 
-    while (string[idx] != '}')
-        idx++;
+    char buffer[length + 1];
+    strncpy(buffer, string + idx, length);
+    buffer[length] = 0;
 
-    char buffer[idx - word_start_idx + 1];
-    strncpy(buffer, string + word_start_idx, idx - word_start_idx);
-    buffer[idx - word_start_idx] = 0;
-
-    idx++;
+    idx += length + 1;
 
     return new WordOperation(buffer);
 }
 
-Operation* Parser::ParseWord(const char* string, int& idx)
+Operation* Parser::ParseWord(const char* string, int& idx, bool is_quoted_string)
 {
-    SkipSpaces(string, idx);
+    int length = CalculateLengthUntil(string, idx, [is_quoted_string](char symbol) { return not IsWordTerminator(symbol, is_quoted_string); }, true);
 
-    int word_start_idx = idx;
+    char buffer[length + 1];
+    strncpy(buffer, string + idx, length);
+    buffer[length] = 0;
 
-    while (not IsWordTerminator(string[idx]))
-        idx++;
-
-    char buffer[idx - word_start_idx + 1];
-    strncpy(buffer, string + word_start_idx, idx - word_start_idx);
-    buffer[idx - word_start_idx] = 0;
+    idx += length;
 
     return new WordOperation(buffer);
 }
