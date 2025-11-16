@@ -37,7 +37,7 @@ Operation* Parser::Parse(const char* string)
 {
     int idx = 0;
 
-    return ParsePipeRedirection(string, idx);
+    return ParseAndOr(string, idx);
 }
 
 void Parser::SkipSpaces(const char* string, int& idx)
@@ -46,19 +46,47 @@ void Parser::SkipSpaces(const char* string, int& idx)
         idx++;
 }
 
+Operation* Parser::ParseAndOr(const char* string, int& idx)
+{
+    SkipSpaces(string, idx);
+    auto lhs = ParsePipeRedirection(string, idx);
+    SkipSpaces(string, idx);
+
+    if (string[idx] == '&' and string[idx + 1] == '&')
+    {
+        idx += 2;
+        SkipSpaces(string, idx);
+        auto rhs = ParseAndOr(string, idx);
+
+        return new AndOperation(lhs, rhs);
+    }
+
+    else if (string[idx] == '|' and string[idx + 1] == '|')
+    {
+        idx += 2;
+        SkipSpaces(string, idx);
+        auto rhs = ParseAndOr(string, idx);
+
+        return new OrOperation(lhs, rhs);
+    }
+
+    else
+        return lhs;
+}
+
 Operation* Parser::ParsePipeRedirection(const char* string, int& idx)
 {
     SkipSpaces(string, idx);
     auto lhs = ParseFileRedirection(string, idx);
     SkipSpaces(string, idx);
 
-    if (string[idx] != '|')
+    if (string[idx] != '|' or string[idx + 1] == '|')
         return lhs;
 
     auto pipe_redirection = new PipeRedirectionOperation();
     pipe_redirection->AddOperand(lhs);
 
-    while (string[idx] == '|')
+    while (string[idx] == '|' and string[idx + 1] != '|')
     {
         idx++;
         SkipSpaces(string, idx);
@@ -97,7 +125,7 @@ Operation* Parser::ParseInvocation(const char* string, int& idx)
     InvocationOperation* invocation = new InvocationOperation(name);
     SkipSpaces(string, idx);
 
-    while (string[idx] != '|' and string[idx] != '>' and string[idx] != '\0')
+    while (string[idx] != '|' and string[idx] != '&' and string[idx] != '>' and string[idx] != '\0')
     {
         auto argument = ParseConcatenation(string, idx);
         invocation->AddArgument(argument);

@@ -9,6 +9,8 @@ public:
 
 // private:
     void SkipSpaces(const char* string, int& idx);
+    
+    Operation* ParseAndOr(const char* string, int& idx);
     Operation* ParsePipeRedirection(const char* string, int& idx);
     Operation* ParseFileRedirection(const char* string, int& idx);
     Operation* ParseInvocation(const char* string, int& idx);

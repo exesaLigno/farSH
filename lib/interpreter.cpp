@@ -16,6 +16,64 @@ char* Interpreter::Pop()
     return executionStack.Pop();
 }
 
+void Interpreter::ResetProcessList()
+{
+    childProcessCount = 0;
+
+    if (childProcessList != nullptr)
+        delete[] childProcessList;
+
+    if (childProcessStatuses != nullptr)
+        delete[] childProcessStatuses;
+
+    childProcessList = nullptr;
+    childProcessStatuses = nullptr;
+}
+
+void Interpreter::AddProcessToList(const pid_t pid)
+{
+    if (childProcessCount == 0)
+    {
+        childProcessCount++;
+        childProcessList = new pid_t[childProcessCount] { 0 };
+        childProcessStatuses = new int[childProcessCount] { Running };
+    }
+
+    else
+    {
+        int old_count = childProcessCount++;
+        
+        pid_t* new_child_process_list = new pid_t[childProcessCount] { 0 };
+        int* new_child_process_statuses = new int[childProcessCount] { Running };
+
+        memcpy(new_child_process_list, childProcessList, old_count * sizeof(pid_t));
+        memcpy(new_child_process_statuses, childProcessStatuses, old_count * sizeof(int));
+
+        delete[] childProcessList;
+        delete[] childProcessStatuses;
+
+        childProcessList = new_child_process_list;
+        childProcessStatuses = new_child_process_statuses;
+    }
+
+    childProcessList[childProcessCount - 1] = pid;
+}
+
+void Interpreter::AddProcessStatus(const pid_t pid, const int status)
+{
+    for (int idx = 0; idx < childProcessCount; idx++)
+        if (childProcessList[idx] == pid)
+        {
+            childProcessStatuses[idx] = status;
+            break;
+        }
+}
+
+int Interpreter::CheckLastStatus() const
+{
+    return childProcessStatuses[childProcessCount - 1];
+}
+
 Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_not_main_process)
 {
     child_pid = 0;
@@ -32,7 +90,10 @@ Interpreter::ProcessKind Interpreter::Fork(pid_t& child_pid, bool just_ensure_no
     }
 
     else
+    {
+        AddProcessToList(child_pid);
         return ProcessKind::Parent;
+    }
 }
 
 void Interpreter::WaitAll()
@@ -40,11 +101,14 @@ void Interpreter::WaitAll()
     pid_t child_pid = 0;
     int wstatus;
 
-    while ((child_pid = wait(&wstatus)) > 0);
+    while ((child_pid = wait(&wstatus)) > 0)
+        AddProcessStatus(child_pid, wstatus);
 }
 
 void Interpreter::Execute(const Operation* operation)
 {
+    ResetProcessList();
+
     CheckAndExecute(operation);
     WaitAll();
 }
@@ -70,6 +134,12 @@ void Interpreter::CheckAndExecute(const Operation* operation)
             break;
         case OperationKind::FileRedirection:
             ExecuteFileRedirectionOperation(operation);
+            break;
+        case OperationKind::And:
+            ExecuteAndOperation(operation);
+            break;
+        case OperationKind::Or:
+            ExecuteOrOperation(operation);
             break;
         default:
             throw std::runtime_error("Trying to execute unsupported operation");
@@ -223,4 +293,35 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
     }
 
     WaitAll();
+}
+
+void Interpreter::ExecuteAndOperation(const Operation* operation)
+{
+    auto and_operation = operation->As<AndOperation>();
+
+    CheckAndExecute(and_operation->First());
+
+    if (CheckLastStatus() == 0)
+        CheckAndExecute(and_operation->Second());
+}
+
+void Interpreter::ExecuteOrOperation(const Operation* operation)
+{
+    auto or_operation = operation->As<OrOperation>();
+
+    CheckAndExecute(or_operation->First());
+
+    if (CheckLastStatus() != 0)
+        CheckAndExecute(or_operation->Second());
+}
+
+Interpreter::~Interpreter()
+{
+    childProcessCount = 0;
+
+    if (childProcessList != nullptr)
+        delete[] childProcessList;
+
+    if (childProcessStatuses != nullptr)
+        delete[] childProcessStatuses;
 }
