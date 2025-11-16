@@ -8,6 +8,8 @@
 
 #include "syntax/operation.hpp"
 
+#include "syntax/and_operation.hpp"
+#include "syntax/or_operation.hpp"
 #include "syntax/concatenation_operation.hpp"
 #include "syntax/file_redirection_operation.hpp"
 #include "syntax/invocation_operation.hpp"
