@@ -44,6 +44,9 @@ uninstall:
 	rm /usr/bin/$(EXECUTABLE_NAME)
 
 $(TARGET): $(OBJECTS)
+ifdef DEBUG
+	mkdir -p /tmp/farsh/
+endif
 	@mkdir -p $(dir $@)
 	$(CXX) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
 
@@ -57,6 +60,6 @@ clean:
 
 .PHONY: cloc
 cloc:
-	cloc ./ --exclude-lang=D,JSON,Markdown,YAML,make
+	cloc ./ --exclude-lang=D,JSON,Markdown,YAML,make,Text
 
 -include $(OBJECTS:.o=.d)

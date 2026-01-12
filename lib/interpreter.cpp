@@ -107,6 +107,12 @@ void Interpreter::WaitAll()
 
 void Interpreter::Execute(const Operation* operation)
 {
+#ifdef DEBUG
+    FILE* fd = fopen("/tmp/farsh/last_command_ast.dot", "w");
+    operation->DumpTo(fd);
+    fclose(fd);
+#endif
+
     ResetProcessList();
 
     CheckAndExecute(operation);

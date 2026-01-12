@@ -121,10 +121,6 @@ int REPL::ExecuteCommand()
     char* string = inputBuffer.AsUnicodeString().ToString();
     auto ast = parser.Parse(string);
 
-    FILE* fd = fopen("/tmp/farsh/last_command_ast.dot", "w");
-    ast->DumpTo(fd);
-    fclose(fd);
-
     interpreter.Execute(ast);
 
     delete ast;
