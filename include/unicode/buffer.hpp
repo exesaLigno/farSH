@@ -5,7 +5,7 @@
 #include "symbol.hpp"
 #include "string.hpp"
 
-class UnicodeBuffer : UnicodeString
+class UnicodeBuffer : private UnicodeString
 {
 private:
     size_t cursorPosition = 0;
