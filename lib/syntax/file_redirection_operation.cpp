@@ -18,7 +18,7 @@ void FileRedirectionOperation::DumpNodeTo(FILE* fd) const
 void FileRedirectionOperation::DumpEdgesTo(FILE* fd) const
 {
     for (size_t idx = 0; idx < children_len; idx++)
-        fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Destination");
+        fprintf(fd, "\tnode_%x -> node_%x [label=%s]\n", this, children[idx], children[idx] == Source() ? "Source" : "Filename");
 }
 
 FileRedirectionOperation::FileRedirectionOperation(Operation* source, Operation* destination) : Operation(OperationKind::FileRedirection)
@@ -35,7 +35,7 @@ const Operation* FileRedirectionOperation::Source() const
     return children[0];
 }
 
-const Operation* FileRedirectionOperation::Destination() const
+const Operation* FileRedirectionOperation::Filename() const
 {
     return children[1];
 }

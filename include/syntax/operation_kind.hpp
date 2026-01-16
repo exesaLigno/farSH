@@ -7,8 +7,7 @@ enum class OperationKind
     FileRedirection,
     And, Or, Not,
     Invocation,
-    RawStringLiteral,
-    EnvironmentVariableReference,
+    EnvironmentVariableLoad,
     Concatenation,
     Word
 };

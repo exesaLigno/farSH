@@ -29,20 +29,20 @@ private:
     void AddProcessStatus(const pid_t pid, const int status);
     int CheckLastStatus() const;
 
-    void Push(const char* value);
-    char* Pop();
+    void MemoryPush(const char* value);
+    char* MemoryPop();
 
-    void CheckAndExecute(const Operation* operation);
+    void ExecuteOperation(const Operation* operation);
+    void ExecuteDescendants(const Operation* operation);
 
-    void ExecuteWordOperation(const Operation* word);
-    void ExecuteRawStringLiteralOperation(const Operation* raw_string_literal);
-    void ExecuteInvocationOperation(const Operation* invocation);
-    void ExecuteEnvironmentVariableReferenceOperation(const Operation* environment_variable_reference);
-    void ExecuteConcatenationOperation(const Operation* composition);
-    void ExecuteFileRedirectionOperation(const Operation* file_redirection);
-    void ExecutePipeRedirectionOperation(const Operation* pipe_redirection);
-    void ExecuteAndOperation(const Operation* and_operation);
-    void ExecuteOrOperation(const Operation* or_operation);
+    void ExecuteWordOperation(const WordOperation* word);
+    void ExecuteInvocationOperation(const InvocationOperation* invocation);
+    void ExecuteEnvironmentVariableLoadOperation(const EnvironmentVariableLoadOperation* environment_variable_reference);
+    void ExecuteConcatenationOperation(const ConcatenationOperation* composition);
+    void ExecuteFileRedirectionOperation(const FileRedirectionOperation* file_redirection);
+    void ExecutePipeRedirectionOperation(const PipeRedirectionOperation* pipe_redirection);
+    void ExecuteAndOperation(const AndOperation* and_operation);
+    void ExecuteOrOperation(const OrOperation* or_operation);
 
     Interpreter::ProcessKind Fork(pid_t& child_pid, bool just_ensure_not_main_process = false);
     void WaitAll();

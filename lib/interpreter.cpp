@@ -4,14 +4,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-void Interpreter::Push(const char* value)
+void Interpreter::MemoryPush(const char* value)
 {
     char* copy = new char[strlen(value) + 1] { 0 };
     strcpy(copy, value);
     executionStack.Push(copy);
 }
 
-char* Interpreter::Pop()
+char* Interpreter::MemoryPop()
 {
     return executionStack.Pop();
 }
@@ -115,61 +115,63 @@ void Interpreter::Execute(const Operation* operation)
 
     ResetProcessList();
 
-    CheckAndExecute(operation);
+    ExecuteOperation(operation);
     WaitAll();
 }
 
-void Interpreter::CheckAndExecute(const Operation* operation)
+void Interpreter::ExecuteOperation(const Operation* operation)
 {
     switch (operation->Kind())
     {
         case OperationKind::Word:
-            ExecuteWordOperation(operation);
+            ExecuteWordOperation(operation->As<WordOperation>());
             break;
         case OperationKind::Invocation:
-            ExecuteInvocationOperation(operation);
+            ExecuteInvocationOperation(operation->As<InvocationOperation>());
             break;
-        case OperationKind::EnvironmentVariableReference:
-            ExecuteEnvironmentVariableReferenceOperation(operation);
+        case OperationKind::EnvironmentVariableLoad:
+            ExecuteEnvironmentVariableLoadOperation(operation->As<EnvironmentVariableLoadOperation>());
             break;
         case OperationKind::Concatenation:
-            ExecuteConcatenationOperation(operation);
+            ExecuteConcatenationOperation(operation->As<ConcatenationOperation>());
             break;
         case OperationKind::PipeRedirection:
-            ExecutePipeRedirectionOperation(operation);
+            ExecutePipeRedirectionOperation(operation->As<PipeRedirectionOperation>());
             break;
         case OperationKind::FileRedirection:
-            ExecuteFileRedirectionOperation(operation);
+            ExecuteFileRedirectionOperation(operation->As<FileRedirectionOperation>());
             break;
         case OperationKind::And:
-            ExecuteAndOperation(operation);
+            ExecuteAndOperation(operation->As<AndOperation>());
             break;
         case OperationKind::Or:
-            ExecuteOrOperation(operation);
+            ExecuteOrOperation(operation->As<OrOperation>());
             break;
         default:
             throw std::runtime_error("Trying to execute unsupported operation");
     }
 }
 
-
-void Interpreter::ExecuteWordOperation(const Operation* operation)
+void Interpreter::ExecuteDescendants(const Operation* operation)
 {
-    Push(operation->As<WordOperation>()->GetText());
+    for (int idx = 0; idx < operation->ChildrenCount(); idx++)
+        ExecuteOperation(operation->GetChild(idx));
 }
 
-void Interpreter::ExecuteInvocationOperation(const Operation* operation)
+void Interpreter::ExecuteWordOperation(const WordOperation* word)
 {
-    auto invocation = operation->As<InvocationOperation>();
+    MemoryPush(word->GetText());
+}
 
-    for (int idx = 0; idx < invocation->ChildrenCount(); idx++)
-        CheckAndExecute(invocation->GetChild(idx));
+void Interpreter::ExecuteInvocationOperation(const InvocationOperation* invocation)
+{
+    ExecuteDescendants(invocation);
 
     const int argc = invocation->ChildrenCount();
     char* argv[argc + 1];
     argv[argc] = 0;
     for (int idx = argc - 1; idx >= 0; idx--)
-        argv[idx] = Pop();
+        argv[idx] = MemoryPop();
 
     if (!strcmp(argv[0], "cd"))
     {
@@ -195,26 +197,23 @@ void Interpreter::ExecuteInvocationOperation(const Operation* operation)
         delete[] argv[idx];
 }
 
-void Interpreter::ExecuteEnvironmentVariableReferenceOperation(const Operation* operation)
+void Interpreter::ExecuteEnvironmentVariableLoadOperation(const EnvironmentVariableLoadOperation* environment_variable_load)
 {
-    CheckAndExecute(operation->As<EnvironmentVariableLoadOperation>()->VariableName());
+    ExecuteOperation(environment_variable_load->VariableName());
 
-    char* name = Pop();
+    char* name = MemoryPop();
     char* value = getenv(name);
 
     delete[] name;
 
-    Push(value ? value : "");
+    MemoryPush(value ? value : "");
 }
 
-void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
+void Interpreter::ExecuteConcatenationOperation(const ConcatenationOperation* concatenation)
 {
-    auto composition = operation->As<ConcatenationOperation>();
+    ExecuteDescendants(concatenation);
 
-    for (size_t idx = 0; idx < composition->ValuesCount(); idx++)
-        CheckAndExecute(composition->Value(idx));
-
-    const int composition_elements_count = composition->ChildrenCount();
+    const int composition_elements_count = concatenation->ChildrenCount();
     char* composition_elements[composition_elements_count + 1];
     composition_elements[composition_elements_count] = 0;
 
@@ -222,7 +221,7 @@ void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
 
     for (int idx = composition_elements_count - 1; idx >= 0; idx--)
     {
-        composition_elements[idx] = Pop();
+        composition_elements[idx] = MemoryPop();
         final_size += strlen(composition_elements[idx]);
     }
 
@@ -236,13 +235,11 @@ void Interpreter::ExecuteConcatenationOperation(const Operation* operation)
         delete[] composition_elements[idx];
 }
 
-void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
+void Interpreter::ExecuteFileRedirectionOperation(const FileRedirectionOperation* file_redirection)
 {
-    auto file_redirection = operation->As<FileRedirectionOperation>();
+    ExecuteOperation(file_redirection->Filename());
 
-    CheckAndExecute(file_redirection->Destination());
-
-    char* filename = Pop();
+    char* filename = MemoryPop();
 
     FILE* output = fopen(filename, file_redirection->HasFlag(FileRedirectionOperation::F_APPEND) ? "a" : "w");
     delete[] filename;
@@ -252,15 +249,13 @@ void Interpreter::ExecuteFileRedirectionOperation(const Operation* operation)
     if (file_redirection->HasFlag(FileRedirectionOperation::F_REDIRECT_STDERR))
         dup2(fileno(output), STDERR_FILENO);
 
-    CheckAndExecute(file_redirection->Source());
+    ExecuteOperation(file_redirection->Source());
 
     fclose(output);
 }
 
-void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
+void Interpreter::ExecutePipeRedirectionOperation(const PipeRedirectionOperation* pipe_redirection)
 {
-    auto pipe_redirection = operation->As<PipeRedirectionOperation>();
-
     int pipes_count = pipe_redirection->OperandsCount() - 1;
 
     int pipes[pipes_count][2];
@@ -288,7 +283,7 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
                     close(pipes[idx - 1][0]);
                 }
 
-                Execute(pipe_redirection->GetOperand(idx));
+                ExecuteOperation(pipe_redirection->GetOperand(idx));
 
             case ProcessKind::Parent:
                 if (idx < pipe_redirection->OperandsCount() - 1)
@@ -301,24 +296,20 @@ void Interpreter::ExecutePipeRedirectionOperation(const Operation* operation)
     WaitAll();
 }
 
-void Interpreter::ExecuteAndOperation(const Operation* operation)
+void Interpreter::ExecuteAndOperation(const AndOperation* and_operation)
 {
-    auto and_operation = operation->As<AndOperation>();
-
-    CheckAndExecute(and_operation->First());
+    ExecuteOperation(and_operation->First());
 
     if (CheckLastStatus() == 0)
-        CheckAndExecute(and_operation->Second());
+        ExecuteOperation(and_operation->Second());
 }
 
-void Interpreter::ExecuteOrOperation(const Operation* operation)
+void Interpreter::ExecuteOrOperation(const OrOperation* or_operation)
 {
-    auto or_operation = operation->As<OrOperation>();
-
-    CheckAndExecute(or_operation->First());
+    ExecuteOperation(or_operation->First());
 
     if (CheckLastStatus() != 0)
-        CheckAndExecute(or_operation->Second());
+        ExecuteOperation(or_operation->Second());
 }
 
 Interpreter::~Interpreter()

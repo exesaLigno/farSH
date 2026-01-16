@@ -27,7 +27,7 @@ public:
     FileRedirectionOperation(Operation* source, Operation* destination);
 
     const Operation* Source() const;
-    const Operation* Destination() const;
+    const Operation* Filename() const;
 
     bool HasFlag(uint8_t flag) const;
 };

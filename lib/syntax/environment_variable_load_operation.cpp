@@ -5,7 +5,7 @@
 
 void EnvironmentVariableLoadOperation::DumpNodeTo(FILE* fd) const
 {
-    fprintf(fd, "\tnode_%x [shape=record; label=\"EnvironmentVariableReference\"]\n", this);
+    fprintf(fd, "\tnode_%x [shape=record; label=\"EnvironmentVariableLoad\"]\n", this);
 }
 
 void EnvironmentVariableLoadOperation::DumpEdgesTo(FILE* fd) const
@@ -14,7 +14,7 @@ void EnvironmentVariableLoadOperation::DumpEdgesTo(FILE* fd) const
         fprintf(fd, "\tnode_%x -> node_%x [label=\"VariableName\"]\n", this, children[idx]);
 }
 
-EnvironmentVariableLoadOperation::EnvironmentVariableLoadOperation(Operation* variable_name) : Operation(OperationKind::EnvironmentVariableReference)
+EnvironmentVariableLoadOperation::EnvironmentVariableLoadOperation(Operation* variable_name) : Operation(OperationKind::EnvironmentVariableLoad)
 {
     AppendChild(variable_name);
 }
