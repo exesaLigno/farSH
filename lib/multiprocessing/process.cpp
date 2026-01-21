@@ -1,22 +1,47 @@
 #include "multiprocessing/process.hpp"
 
 #include <cstdlib>
-#include <unistd.h>
 #include <sys/wait.h>
-#include <csignal>
+#include <cstring>
 
-#include <cstdio>
+using namespace Multiprocessing;
 
-Process::Process(std::function<int()> target)
+void Process::SetFlags(Flags flags)
 {
-    internalTarget = target;
+    if ((flags & Flags::CaptureSTDIN) == Flags::CaptureSTDIN)
+        captureSTDIN = true;
+
+    if ((flags & Flags::CaptureSTDOUT) == Flags::CaptureSTDOUT)
+        captureSTDOUT = true;
+
+    if ((flags & Flags::CaptureSTDERR) == Flags::CaptureSTDERR)
+        captureSTDERR = true;
+}
+
+Process::Process(std::function<int()> _function, Flags flags) noexcept
+{
+    function = _function;
     type = Type::Function;
+    SetFlags(flags);
+}
+
+Process::Process(const int _argc, const char* const _argv[], Flags flags) noexcept
+{
+    argv = new char*[_argc + 1] { nullptr };
+    for (int i = 0; i < _argc; i++)
+    {
+        argv[i] = new char[strlen(_argv[i]) + 1] { 0 };
+        strcpy(argv[i], _argv[i]);
+    }
+
+    type = Type::Argv;
+    SetFlags(flags);
 }
 
 Process::Process(Process&& other) noexcept
 {
     type = other.type;
-    internalTarget = other.internalTarget;
+    function = other.function;
     processId = other.processId;
     status = other.status;
 }
@@ -26,7 +51,7 @@ Process& Process::operator=(Process&& other) noexcept
     if (this != &other)
     {
         type = other.type;
-        internalTarget = other.internalTarget;
+        function = other.function;
         processId = other.processId;
         status = other.status;
     }
@@ -34,7 +59,7 @@ Process& Process::operator=(Process&& other) noexcept
     return *this;
 }
 
-void Process::Spawn()
+void Process::Spawn() noexcept
 {
     pid_t child_pid = fork();
 
@@ -48,30 +73,50 @@ void Process::Spawn()
     switch (type)
     {
         case Type::Function:
-            exit(internalTarget());
+            exit(function());
+        
+        case Type::Argv:
+            execvp(argv[0], argv);
+            exit(1);
     }
 }
 
-void Process::Kill()
+void Process::Kill() noexcept
 {
     kill(processId, SIGKILL);
     Join();
 }
 
-void Process::Terminate()
+void Process::Terminate() noexcept
 {
     kill(processId, SIGTERM);
     Join();
 }
 
-void Process::Join()
+void Process::Join() noexcept
 {
     int wstatus = 0;
     waitpid(processId, &wstatus, 0);
     status = wstatus;
 }
 
-const ImmutableStatus Process::CurrentStatus() const
+const ImmutableStatus Process::CurrentStatus() const noexcept
 {
     return status;
+}
+
+Process::~Process() noexcept
+{
+    switch (type)
+    {
+        case Type::Function:
+            break;
+
+        case Type::Argv:
+            int i = 0;
+            for (int i = 0; argv[i]; i++)
+                delete[] argv[i];
+            delete[] argv;
+            break;
+    }
 }

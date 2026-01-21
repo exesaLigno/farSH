@@ -6,7 +6,33 @@
 #include <cstring>
 #include <stdexcept>
 
+using namespace Multiprocessing;
+
 Status::Status() { }
+
+Status::Status(const State _state)
+{
+    UpdateWith(_state);
+}
+
+Status::Status(const int _wstatus)
+{
+    UpdateWith(_wstatus);
+}
+
+Status& Status::operator=(const State new_state)
+{
+    UpdateWith(new_state);
+
+    return *this;
+}
+
+Status& Status::operator=(const int wstatus)
+{
+    UpdateWith(wstatus);
+
+    return *this;
+}
 
 void Status::UpdateWith(const Status::State new_state)
 {
@@ -44,20 +70,6 @@ void Status::UpdateWith(const int wstatus)
         state = State::Running;
         result = 0;
     }
-}
-
-Status& Status::operator=(const State& new_state)
-{
-    UpdateWith(new_state);
-
-    return *this;
-}
-
-Status& Status::operator=(const int& wstatus)
-{
-    UpdateWith(wstatus);
-
-    return *this;
 }
 
 Status::State Status::CurrentState() const

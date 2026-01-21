@@ -2,37 +2,56 @@
 
 #include "status.hpp"
 
-#include <cstdint>
+#include "flags.hpp"
+
 #include <cstdlib>
+#include <cstdint>
 #include <functional>
 
-class Process
+namespace Multiprocessing
 {
-private:
-    enum class Type : uint8_t { Unknown, Function };
+    class Process
+    {
+    private:
+        enum class Type : uint8_t { Unknown, Function, Argv };
 
-    Type type = Type::Unknown;
+        Type type = Type::Unknown;
 
-    std::function<int()> internalTarget = nullptr;
+        void SetFlags(Flags flags);
+        struct
+        {
+            bool captureSTDIN : 1 = false;
+            bool captureSTDOUT : 1 = false;
+            bool captureSTDERR : 1 = false;
+        };
 
-    pid_t processId = 0;
-    Status status;
+        union
+        {
+            std::function<int()> function = nullptr;
+            char** argv;
+        };
 
-    Process(const Process& other) = delete;
-    Process& operator=(const Process& other) = delete;
+        pid_t processId = 0;
+        Status status = Status::State::Pending;
 
-public:
-    Process(std::function<int()> target);
+        Process(const Process& other) = delete;
+        Process& operator=(const Process& other) = delete;
 
-    Process(Process&& other) noexcept;
-    Process& operator=(Process&& other) noexcept;
+    public:
+        Process(std::function<int()> _function, Flags flags = Flags::Empty) noexcept;
+        Process(const char* _prompt, Flags flags = Flags::Empty) = delete;
+        Process(int _argc, const char* const _argv[], Flags flags = Flags::Empty) noexcept;
 
-    void Spawn();
-    void Join();
-    void Kill();
-    void Terminate();
+        Process(Process&& other) noexcept;
+        Process& operator=(Process&& other) noexcept;
 
-    const ImmutableStatus CurrentStatus() const;
+        void Spawn() noexcept;
+        void Join() noexcept;
+        void Kill() noexcept;
+        void Terminate() noexcept;
 
-    // ~Process();
-};
+        const ImmutableStatus CurrentStatus() const noexcept;
+
+        ~Process() noexcept;
+    };
+}
